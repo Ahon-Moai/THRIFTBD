@@ -211,8 +211,18 @@ export default function AdminPanel() {
       alert('AUTHENTICATION REQUIRED: Please sign in to perform this action.');
       return;
     }
+    
+    // Check for large Base64 payloads
+    const payloadSize = JSON.stringify(formData).length;
+    if (payloadSize > 800000) { // ~800KB (limit is 1MB total)
+      alert('ARCHIVE FAULT: Visual assets are too large. Please reduce image quality or count to stay under the 1MB injection limit.');
+      return;
+    }
+
     try {
       const { id, createdAt, updatedAt, ...cleanData } = formData as any;
+      console.log('Sending archive packet...', { type: editingProduct ? 'UPDATE' : 'CREATE', size: payloadSize });
+      
       if (editingProduct) {
         await updateDoc(doc(db, 'products', editingProduct.id), {
           ...cleanData,
@@ -226,7 +236,13 @@ export default function AdminPanel() {
         });
       }
       setIsModalOpen(false);
-    } catch (error) {
+      alert(editingProduct ? 'ARCHIVE UPDATED' : 'ARCHIVE PUBLISHED');
+    } catch (error: any) {
+      console.error('Submission Fault:', error);
+      const errorMessage = error.message && error.message.startsWith('{') 
+        ? JSON.parse(error.message).error 
+        : error.message;
+      alert(`SUBMISSION FAILED: ${errorMessage || 'Unknown Protocol Error'}`);
       handleFirestoreError(error, editingProduct ? OperationType.UPDATE : OperationType.CREATE, 'products');
     }
   };
@@ -398,7 +414,19 @@ export default function AdminPanel() {
                 <button 
                   onClick={() => {
                     setEditingProduct(null);
-                    setFormData({ name: '', price: 0, category: 'Tees', stock: 1, images: [], sizes: [] });
+                    setFormData({
+                      name: '',
+                      price: 0,
+                      category: 'Tees',
+                      condition: 'NEW',
+                      stock: 1,
+                      status: 'active',
+                      images: [],
+                      tags: [],
+                      sizes: [],
+                      colors: [],
+                      description: ''
+                    });
                     setIsModalOpen(true);
                   }}
                   className="bg-black text-white px-6 py-3 text-[10px] font-bold uppercase tracking-[0.2em] flex items-center gap-2 hover:bg-zinc-800 transition-all rounded-full shadow-lg"

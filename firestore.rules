@@ -76,7 +76,12 @@ service cloud.firestore {
         return data.keys().hasAll(['email', 'role']) &&
                data.email == request.auth.token.email &&
                data.role in ['user', 'admin'] &&
-               (data.role == 'admin' ? (data.email == "studiosventa@gmail.com" || data.email == "thriftbd71@gmail.com" || data.email == "thriftbd71@gamil.com") : true);
+               (data.role == 'admin' ? (
+                 data.email == "studiosventa@gmail.com" || 
+                 data.email == "thriftbd71@gmail.com" || 
+                 data.email == "thriftbd71@gmail.com" || 
+                 data.email == "mimpy124ahon124@gmail.com"
+               ) : true);
       }
 
       allow get: if isOwner(userId) || isAdmin();
