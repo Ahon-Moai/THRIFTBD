@@ -1,9 +1,7 @@
 import { ShoppingBag, User as UserIcon, Search, Menu, Moon, Sun, X } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { auth, db } from '../lib/firebase';
-import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { auth, db, doc, getDoc, setDoc, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from '../lib/firebase';
 
 export default function Header({ onCartClick }: { onCartClick: () => void }) {
   const [user, setUser] = useState(auth.currentUser);

@@ -24,6 +24,10 @@ import {
   ClipboardList
 } from 'lucide-react';
 import { 
+  db, 
+  auth, 
+  handleFirestoreError, 
+  OperationType,
   collection, 
   addDoc, 
   updateDoc, 
@@ -32,10 +36,16 @@ import {
   onSnapshot, 
   query, 
   orderBy, 
-  serverTimestamp 
-} from 'firebase/firestore';
-import { db, auth, handleFirestoreError, OperationType } from '../lib/firebase';
-import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from 'firebase/auth';
+  serverTimestamp,
+  signInWithPopup,
+  GoogleAuthProvider,
+  onAuthStateChanged,
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+  uploadBytes,
+  storage
+} from '../lib/firebase';
 import { Product } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 

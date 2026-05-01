@@ -17,8 +17,7 @@ import ShopPage from './components/ShopPage';
 import Footer from './components/Footer';
 import CartDrawer from './components/CartDrawer';
 import { CartItem, Product } from './types';
-import { db } from './lib/firebase';
-import { collection, onSnapshot, query, orderBy, limit } from 'firebase/firestore';
+import { db, collection, onSnapshot, query, orderBy, limit } from './lib/firebase';
 
 // Lazy load heavy components for faster initial page load
 const AdminPanel = lazy(() => import('./components/AdminPanel'));

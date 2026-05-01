@@ -1,16 +1,70 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { initializeFirestore, doc, getDocFromServer } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
+import { 
+  getAuth, 
+  onAuthStateChanged, 
+  signInWithPopup, 
+  GoogleAuthProvider, 
+  signOut 
+} from 'firebase/auth';
+import { 
+  initializeFirestore, 
+  doc, 
+  getDocFromServer, 
+  collection, 
+  onSnapshot, 
+  query, 
+  orderBy, 
+  limit, 
+  addDoc, 
+  updateDoc, 
+  deleteDoc, 
+  serverTimestamp,
+  getDoc,
+  setDoc
+} from 'firebase/firestore';
+import { 
+  getStorage, 
+  ref, 
+  uploadBytesResumable, 
+  getDownloadURL, 
+  uploadBytes 
+} from 'firebase/storage';
 import firebaseConfig from '../../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
 
-// Initialize Firestore 
+// Initialize Services
 export const db = initializeFirestore(app, {}, firebaseConfig.firestoreDatabaseId);
-
 export const auth = getAuth(app);
 export const storage = getStorage(app);
+
+// Centralized Exports to fix Rollup resolution issues in fragmented environments
+export {
+  // Firestore
+  collection, 
+  onSnapshot, 
+  query, 
+  orderBy, 
+  limit, 
+  doc, 
+  addDoc, 
+  updateDoc, 
+  deleteDoc, 
+  serverTimestamp,
+  getDocFromServer,
+  getDoc,
+  setDoc,
+  // Auth
+  onAuthStateChanged,
+  signInWithPopup,
+  GoogleAuthProvider,
+  signOut,
+  // Storage
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+  uploadBytes
+};
 
 // Test Firestore connection on boot removed to reduce console clutter and potential permission errors on non-essential paths
 export enum OperationType {
