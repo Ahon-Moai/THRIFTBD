@@ -35,10 +35,11 @@ service cloud.firestore {
     function isAdmin() {
       return isSignedIn() && (
         exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
-        request.auth.token.email == "studiosventa@gmail.com" ||
-        request.auth.token.email == "thriftbd71@gmail.com" ||
-        request.auth.token.email == "thriftbd71@gamil.com" ||
-        request.auth.token.email == "mimpy124ahon124@gmail.com"
+        (request.auth.token.get('email', '').lower() in [
+          "studiosventa@gmail.com",
+          "thriftbd71@gmail.com",
+          "mimpy124ahon124@gmail.com"
+        ])
       );
     }
 
@@ -77,10 +78,9 @@ service cloud.firestore {
                data.email == request.auth.token.email &&
                data.role in ['user', 'admin'] &&
                (data.role == 'admin' ? (
-                 data.email == "studiosventa@gmail.com" || 
-                 data.email == "thriftbd71@gmail.com" || 
-                 data.email == "thriftbd71@gmail.com" || 
-                 data.email == "mimpy124ahon124@gmail.com"
+                 data.email.lower() == "studiosventa@gmail.com" || 
+                 data.email.lower() == "thriftbd71@gmail.com" || 
+                 data.email.lower() == "mimpy124ahon124@gmail.com"
                ) : true);
       }
 

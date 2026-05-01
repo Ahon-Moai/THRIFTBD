@@ -17,20 +17,23 @@ export default function Header({ onCartClick }: { onCartClick: () => void }) {
         const admins = [
           'studiosventa@gmail.com', 
           'thriftbd71@gmail.com', 
-          'thriftbd71@gamil.com', 
           'mimpy124ahon124@gmail.com'
         ];
-        setIsAdmin(admins.includes(u.email || ''));
+        const userEmail = (u.email || '').toLowerCase();
+        const isUserAdmin = admins.includes(userEmail);
+        setIsAdmin(isUserAdmin);
         
         // Background sync with Firestore
         const userDocRef = doc(db, 'users', u.uid);
         const userDoc = await getDoc(userDocRef);
         if (!userDoc.exists()) {
-          const isUserAdmin = admins.includes(u.email || '');
           await setDoc(userDocRef, {
-            email: u.email,
+            email: userEmail,
+            name: u.displayName,
+            photoURL: u.photoURL,
             role: isUserAdmin ? 'admin' : 'user',
-            createdAt: new Date().toISOString()
+            createdAt: serverTimestamp(),
+            lastLogin: serverTimestamp()
           });
         }
       } else {

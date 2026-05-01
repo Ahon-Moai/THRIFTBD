@@ -67,10 +67,23 @@ export default function AdminPanel() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [user, setUser] = useState(auth.currentUser);
+  const [isAdminUser, setIsAdminUser] = useState(false);
 
   useEffect(() => {
     const unsubAuth = onAuthStateChanged(auth, (u) => {
       setUser(u);
+      if (u) {
+        const admins = [
+          'studiosventa@gmail.com',
+          'thriftbd71@gmail.com',
+          'mimpy124ahon124@gmail.com'
+        ];
+        const userEmail = (u.email || '').toLowerCase();
+        setIsAdminUser(admins.includes(userEmail));
+        console.log('Admin Status Verification:', { email: userEmail, isAdmin: admins.includes(userEmail) });
+      } else {
+        setIsAdminUser(false);
+      }
     });
     return () => unsubAuth();
   }, []);
@@ -480,31 +493,52 @@ export default function AdminPanel() {
                           </div>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex items-center justify-end gap-2">
                             <button 
                               onClick={() => {
                                 setEditingProduct(p);
                                 setFormData(p);
                                 setIsModalOpen(true);
                               }}
-                              className="p-2 hover:bg-black hover:text-white rounded-lg transition-colors"
+                              className="p-2.5 bg-zinc-50 hover:bg-black hover:text-white rounded-xl transition-all duration-300 border border-black/5"
+                              title="Edit Object"
                             >
                                 <Edit3 className="w-3.5 h-3.5" />
                             </button>
-                            <button 
-                              onClick={async () => {
-                                if (!user) {
-                                  alert('Authentication Required');
-                                  return;
-                                }
-                                if (window.confirm('Delete Archive?')) {
-                                  await deleteDoc(doc(db, 'products', p.id));
-                                }
-                              }}
-                              className="p-2 hover:bg-red-500 hover:text-white rounded-lg transition-colors"
-                            >
-                                <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                            {isAdminUser && (
+                              <button 
+                                onClick={async () => {
+                                  if (!p.id) {
+                                    alert('ARCHIVE FAULT: Identification missing for this object.');
+                                    return;
+                                  }
+                                  
+                                  if (window.confirm(`ERASE ARCHIVE: ${p.name}?\n\nThis action is permanent and will remove the item from all listings.`)) {
+                                    try {
+                                      const productRef = doc(db, 'products', p.id);
+                                      console.log('Initiating archive erasure sequence...', p.id);
+                                      await deleteDoc(productRef);
+                                      alert('ARCHIVE DELETED SUCCESSFULLY');
+                                    } catch (error: any) {
+                                      console.error('Deletion Protocol Failure:', error);
+                                      let detailedError = error.message;
+                                      try {
+                                        if (error.message && error.message.startsWith('{')) {
+                                          detailedError = JSON.parse(error.message).error;
+                                        }
+                                      } catch (e) {}
+                                      
+                                      alert(`DELETION FAILED: ${detailedError || 'Permission Denied or System Fault'}`);
+                                      handleFirestoreError(error, OperationType.DELETE, `products/${p.id}`);
+                                    }
+                                  }
+                                }}
+                                className="p-2.5 bg-zinc-50 hover:bg-red-500 hover:text-white rounded-xl transition-all duration-300 border border-black/5"
+                                title="Delete Object"
+                              >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
