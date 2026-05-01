@@ -37,6 +37,7 @@ service cloud.firestore {
         exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
         request.auth.token.email == "studiosventa@gmail.com" ||
         request.auth.token.email == "thriftbd71@gmail.com" ||
+        request.auth.token.email == "thriftbd71@gamil.com" ||
         request.auth.token.email == "mimpy124ahon124@gmail.com"
       );
     }
@@ -75,7 +76,7 @@ service cloud.firestore {
         return data.keys().hasAll(['email', 'role']) &&
                data.email == request.auth.token.email &&
                data.role in ['user', 'admin'] &&
-               (data.role == 'admin' ? (data.email == "studiosventa@gmail.com" || data.email == "thriftbd71@gmail.com") : true);
+               (data.role == 'admin' ? (data.email == "studiosventa@gmail.com" || data.email == "thriftbd71@gmail.com" || data.email == "thriftbd71@gamil.com") : true);
       }
 
       allow get: if isOwner(userId) || isAdmin();

@@ -21,7 +21,8 @@ import {
   Monitor,
   LayoutDashboard,
   Box,
-  ClipboardList
+  ClipboardList,
+  Menu
 } from 'lucide-react';
 import { 
   db, 
@@ -56,6 +57,7 @@ type Tab = 'dashboard' | 'inventory' | 'orders';
 
 export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -242,10 +244,38 @@ export default function AdminPanel() {
   };
 
   return (
-    <div className="flex min-h-screen bg-zinc-50 pt-[100px]">
+    <div className="flex min-h-screen bg-zinc-50 pt-[80px] md:pt-[100px]">
+      {/* Sidebar Overlay */}
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsSidebarOpen(false)}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] lg:hidden"
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Mobile Menu Toggle */}
+      <div className="lg:hidden fixed top-[80px] left-0 right-0 z-[20] bg-white border-b border-black/5 px-6 py-4 flex justify-between items-center">
+        <button 
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          className="p-2 border border-black/10 rounded-lg hover:bg-zinc-50 transition-colors"
+        >
+          {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
+        <span className="text-[10px] font-black uppercase tracking-[0.2em]">{activeTab}</span>
+      </div>
+
       {/* Sidebar Navigation */}
-      <aside className="w-64 border-r border-black/5 bg-white flex flex-col fixed h-full z-10">
-        <div className="p-6">
+      <aside className={`
+        fixed inset-y-0 left-0 z-[100] w-64 border-r border-black/5 bg-white flex flex-col h-full 
+        transition-transform duration-500 ease-in-out lg:translate-x-0 lg:static lg:z-10
+        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        <div className="p-6 lg:mt-0 mt-[80px]">
           <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-30">Management</p>
         </div>
         
@@ -254,30 +284,30 @@ export default function AdminPanel() {
             icon={<LayoutDashboard className="w-4 h-4" />} 
             label="Dashboard" 
             isActive={activeTab === 'dashboard'} 
-            onClick={() => setActiveTab('dashboard')} 
+            onClick={() => { setActiveTab('dashboard'); setIsSidebarOpen(false); }} 
           />
           <SidebarLink 
             icon={<Box className="w-4 h-4" />} 
             label="Inventory" 
             isActive={activeTab === 'inventory'} 
-            onClick={() => setActiveTab('inventory')} 
+            onClick={() => { setActiveTab('inventory'); setIsSidebarOpen(false); }} 
           />
           <SidebarLink 
             icon={<ClipboardList className="w-4 h-4" />} 
             label="Live Orders" 
             isActive={activeTab === 'orders'} 
-            onClick={() => setActiveTab('orders')} 
+            onClick={() => { setActiveTab('orders'); setIsSidebarOpen(false); }} 
             badge={pendingOrders.length > 0 ? pendingOrders.length : undefined}
           />
         </nav>
 
         <div className="p-6 mt-auto border-t border-black/5">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-[10px] font-bold">
+            <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-[10px] font-bold shrink-0">
               {user ? user.email?.[0].toUpperCase() : '??'}
             </div>
-            <div className="flex flex-col">
-              <span className="text-xs font-bold uppercase tracking-tight">{user ? 'Authorized' : 'Guest'}</span>
+            <div className="flex flex-col overflow-hidden">
+              <span className="text-xs font-bold uppercase tracking-tight truncate">{user ? user.email?.split('@')[0] : 'Guest'}</span>
               <button 
                 onClick={user ? () => auth.signOut() : login}
                 className="text-[9px] text-brand-green uppercase font-bold text-left hover:underline"
@@ -290,7 +320,7 @@ export default function AdminPanel() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 ml-64 p-8 lg:p-12">
+      <main className="flex-1 w-full p-6 md:p-8 lg:p-12 mt-[60px] lg:mt-0 overflow-x-hidden">
         <AnimatePresence mode="wait">
           {activeTab === 'dashboard' && (
             <motion.div 
@@ -300,9 +330,9 @@ export default function AdminPanel() {
               exit={{ opacity: 0, y: -10 }}
               className="space-y-12"
             >
-              <div className="flex justify-between items-end">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 md:gap-0">
                 <div>
-                  <h1 className="text-4xl font-black tracking-tighter uppercase leading-none text-black">Insights</h1>
+                  <h1 className="text-3xl md:text-4xl font-black tracking-tighter uppercase leading-none text-black">Insights</h1>
                   <p className="text-xs opacity-40 font-bold uppercase tracking-widest mt-2 px-1">Performance Overview</p>
                 </div>
                 <div className="flex items-center gap-2 bg-white border border-black/5 px-4 py-2 rounded-full">
@@ -360,9 +390,9 @@ export default function AdminPanel() {
               exit={{ opacity: 0, y: -10 }}
               className="space-y-8"
             >
-              <div className="flex justify-between items-center">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                  <h1 className="text-4xl font-black tracking-tighter uppercase leading-none text-black">Inventory</h1>
+                  <h1 className="text-3xl md:text-4xl font-black tracking-tighter uppercase leading-none text-black">Inventory</h1>
                   <p className="text-xs opacity-40 font-bold uppercase tracking-widest mt-2 px-1">Storage Management</p>
                 </div>
                 <button 
@@ -388,8 +418,8 @@ export default function AdminPanel() {
                 />
               </div>
 
-              <div className="bg-white border border-black/5 rounded-2xl overflow-hidden shadow-sm">
-                <table className="w-full text-left">
+              <div className="bg-white border border-black/5 rounded-2xl overflow-hidden shadow-sm overflow-x-auto">
+                <table className="w-full text-left min-w-[600px]">
                   <thead className="bg-zinc-50/50 border-b border-black/5">
                     <tr>
                       <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest opacity-30 text-black">Entity</th>
@@ -563,8 +593,8 @@ export default function AdminPanel() {
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
               className="fixed right-0 top-0 bottom-0 w-full max-w-2xl bg-white z-[101] shadow-2xl overflow-y-auto"
             >
-              <div className="p-10">
-                <div className="flex items-center justify-between mb-12">
+              <div className="p-6 md:p-10">
+                <div className="flex items-center justify-between mb-8 md:mb-12">
                    <div>
                        <p className="text-[10px] font-black uppercase tracking-widest opacity-30">Archive Entry</p>
                        <h2 className="text-3xl font-black uppercase tracking-tighter mt-1">{editingProduct ? 'Modify Item' : 'New Object'}</h2>
@@ -584,41 +614,41 @@ export default function AdminPanel() {
                               placeholder="OBJECT NAME"
                               value={formData.name}
                               onChange={(e) => setFormData({...formData, name: e.target.value})}
-                              className="w-full bg-zinc-50 border-none p-5 text-sm font-bold uppercase tracking-tight focus:ring-2 focus:ring-black transition-all"
+                              className="w-full bg-zinc-50 border-none p-4 md:p-5 text-sm font-bold uppercase tracking-tight focus:ring-2 focus:ring-black transition-all"
                             />
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <input 
                                   required
                                   type="number" 
                                   placeholder="VALUE (৳)"
                                   value={formData.price || ''}
                                   onChange={(e) => setFormData({...formData, price: Number(e.target.value)})}
-                                  className="w-full bg-zinc-50 border-none p-5 text-sm font-bold focus:ring-2 focus:ring-black transition-all"
+                                  className="w-full bg-zinc-50 border-none p-4 md:p-5 text-sm font-bold focus:ring-2 focus:ring-black transition-all"
                                 />
                                 <input 
                                   type="number" 
                                   placeholder="QUANITTY"
                                   value={formData.stock || ''}
                                   onChange={(e) => setFormData({...formData, stock: Number(e.target.value)})}
-                                  className="w-full bg-zinc-50 border-none p-5 text-sm font-bold focus:ring-2 focus:ring-black transition-all"
+                                  className="w-full bg-zinc-50 border-none p-4 md:p-5 text-sm font-bold focus:ring-2 focus:ring-black transition-all"
                                 />
                             </div>
                         </section>
 
                         <section className="space-y-4">
                             <label className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Specifications</label>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <select 
                                   value={formData.category}
                                   onChange={(e) => setFormData({...formData, category: e.target.value})}
-                                  className="w-full bg-zinc-50 border-none p-5 text-xs font-bold uppercase tracking-widest focus:ring-2 focus:ring-black transition-all"
+                                  className="w-full bg-zinc-50 border-none p-4 md:p-5 text-xs font-bold uppercase tracking-widest focus:ring-2 focus:ring-black transition-all"
                                 >
                                   {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                                 </select>
                                 <select 
                                   value={formData.condition}
                                   onChange={(e) => setFormData({...formData, condition: e.target.value})}
-                                  className="w-full bg-zinc-50 border-none p-5 text-xs font-bold uppercase tracking-widest focus:ring-2 focus:ring-black transition-all"
+                                  className="w-full bg-zinc-50 border-none p-4 md:p-5 text-xs font-bold uppercase tracking-widest focus:ring-2 focus:ring-black transition-all"
                                 >
                                   <option value="NEW">BRAND NEW</option>
                                   <option value="9/10">PRE-ARCHIVED (9/10)</option>
@@ -717,7 +747,7 @@ export default function AdminPanel() {
                                 />
                             </div>
 
-                            <div className="grid grid-cols-4 gap-4">
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4">
                                 {formData.images?.map((url, idx) => (
                                     <motion.div 
                                         layout
