@@ -14,7 +14,12 @@ export default function Header({ onCartClick }: { onCartClick: () => void }) {
       setUser(u);
       if (u) {
         // Direct email check for admin access in dev/preview
-        const admins = ['studiosventa@gmail.com', 'thriftbd71@gmail.com'];
+        const admins = [
+          'studiosventa@gmail.com', 
+          'thriftbd71@gmail.com', 
+          'thriftbd71@gamil.com', 
+          'mimpy124ahon124@gmail.com'
+        ];
         setIsAdmin(admins.includes(u.email || ''));
         
         // Background sync with Firestore
@@ -90,28 +95,41 @@ export default function Header({ onCartClick }: { onCartClick: () => void }) {
                 <button 
                   onClick={(e) => {
                     if (isAdmin) {
-                      // Navigate to admin on click (especially useful for mobile)
-                      const path = window.location.pathname === '/admin' ? '/' : '/admin';
-                      window.history.pushState({}, '', path);
+                      // Navigate to admin on click
+                      window.history.pushState({}, '', '/admin');
                       window.dispatchEvent(new PopStateEvent('popstate'));
                     }
                   }}
-                  className="p-1 hover:opacity-60 transition-opacity"
+                  className={`p-0.5 rounded-full transition-all duration-300 ${
+                    isAdmin ? 'ring-2 ring-brand-green ring-offset-2 ring-offset-brand-offwhite' : 'hover:opacity-60'
+                  }`}
+                  title={isAdmin ? "Enter Admin Panel" : "Profile"}
                 >
                   <img 
-                    src={user.photoURL || ''} 
+                    src={user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName || 'User'}&background=black&color=white`} 
                     alt={user.displayName || ''} 
-                    className="w-6 h-6 rounded-full border border-black/10"
+                    className="w-6 h-6 rounded-full border border-black/10 transition-transform active:scale-95"
                     referrerPolicy="no-referrer"
                   />
                 </button>
                 <div className="absolute right-0 top-full pt-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
-                  <div className="bg-white border border-brand-black/10 shadow-xl p-4 min-w-[160px]">
-                    <p className="text-[10px] font-bold uppercase mb-2 opacity-40 text-black">{user.displayName}</p>
+                  <div className="bg-white border border-brand-black/10 shadow-2xl p-4 min-w-[180px] rounded-xl">
+                    <div className="mb-3">
+                      <p className="text-[10px] font-black uppercase tracking-widest opacity-40 text-black">Connected As</p>
+                      <p className="text-[11px] font-bold text-black truncate">{user.displayName || user.email?.split('@')[0]}</p>
+                    </div>
+                    <div className="h-px bg-black/5 mb-3" />
                     {isAdmin && (
-                      <a href="/admin" onClick={(e) => navigate(e, '/admin')} className="block text-xs font-bold uppercase mb-3 text-black hover:opacity-60">Admin Panel</a>
+                      <a 
+                        href="/admin" 
+                        onClick={(e) => navigate(e, '/admin')} 
+                        className="flex items-center justify-between text-[11px] font-black uppercase tracking-widest mb-3 text-brand-green hover:opacity-60 group/link"
+                      >
+                        Dashboard
+                        <span className="w-1.5 h-1.5 bg-brand-green rounded-full animate-pulse" />
+                      </a>
                     )}
-                    <button onClick={logout} className="text-xs font-bold uppercase text-red-500 hover:opacity-60">Sign Out</button>
+                    <button onClick={logout} className="text-[11px] font-black uppercase tracking-widest text-red-500 hover:opacity-60 transition-opacity">Sign Out</button>
                   </div>
                 </div>
               </div>
