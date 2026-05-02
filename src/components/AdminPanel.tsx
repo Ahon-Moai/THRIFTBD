@@ -61,8 +61,7 @@ export default function AdminPanel() {
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  const [imageUrlInput, setImageUrlInput] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -155,60 +154,17 @@ export default function AdminPanel() {
     p.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleImageToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = error => reject(error);
-    });
-  };
-
-  const handleFileUpload = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    
-    if (!user) {
-      alert('AUTHENTICATION REQUIRED: Please sign in to modify the archive.');
+  const addImageUrl = () => {
+    if (!imageUrlInput.trim()) return;
+    if (!imageUrlInput.match(/^https?:\/\/.+/i)) {
+      alert('INVALID PROTOCOL: Please enter a valid HTTP/HTTPS URL.');
       return;
     }
-
-    setUploading(true);
-    setUploadProgress(0);
-    
-    const fileArray = Array.from(files);
-    const base64Results: string[] = [];
-
-    console.log('Initiating Design Lab Image Injection...', { count: fileArray.length });
-
-    for (let i = 0; i < fileArray.length; i++) {
-        const file = fileArray[i];
-        try {
-            if (!file.type.startsWith('image/')) continue;
-            
-            // Limit to 2MB for Base64 to prevent Firestore payload size issues (max 1MB per document, but we can store a few small images)
-            // Actually Base64 increases size by 33%. 1MB limit for Firestore doc. 
-            // Better to warn user about size.
-            if (file.size > 1 * 1024 * 1024) {
-                console.warn(`File ${file.name} is large for Base64 injection. Optimization recommended.`);
-            }
-
-            const base64 = await handleImageToBase64(file);
-            base64Results.push(base64);
-            setUploadProgress(Math.round(((i + 1) / fileArray.length) * 100));
-        } catch (error) {
-            console.error('Core Injection Fault:', error);
-        }
-    }
-
-    if (base64Results.length > 0) {
-      setFormData(prev => ({
-        ...prev,
-        images: [...(prev.images || []), ...base64Results]
-      }));
-    }
-
-    setUploading(false);
-    setUploadProgress(0);
+    setFormData(prev => ({
+      ...prev,
+      images: [...(prev.images || []), imageUrlInput.trim()]
+    }));
+    setImageUrlInput('');
   };
 
   const removeImage = (index: number) => {
@@ -766,83 +722,67 @@ export default function AdminPanel() {
 
                         <section className="space-y-4">
                             <div className="flex justify-between items-end">
-                                <label className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Visual Proofs (Technical Manifest)</label>
-                                <span className="text-[8px] font-mono opacity-20 uppercase tracking-[0.1em]">Slots Utilized: {formData.images?.length || 0}/8</span>
+                                <label className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Visual Proofs (Link System)</label>
+                                <span className="text-[8px] font-mono opacity-20 uppercase tracking-[0.1em]">Objects: {formData.images?.length || 0}/8</span>
                             </div>
                             
-                            <div 
-                                className={`group relative aspect-[3/2] border-2 border-dashed rounded-3xl overflow-hidden flex flex-col items-center justify-center p-12 text-center gap-4 transition-all duration-500 cursor-copy ${
-                                    uploading ? 'bg-brand-green/5 border-brand-green/30 scale-[0.98]' : 'bg-zinc-50 border-black/5 hover:bg-white hover:border-black/20 hover:shadow-xl'
-                                }`}
-                                onDragOver={(e) => e.preventDefault()}
-                                onDrop={(e) => { e.preventDefault(); handleFileUpload(e.dataTransfer.files); }}
-                            >
-                                {/* Decorative Glitch elements */}
-                                <div className="absolute top-4 left-4 w-2 h-2 border-t border-l border-black/20" />
-                                <div className="absolute top-4 right-4 w-2 h-2 border-t border-r border-black/20" />
-                                <div className="absolute bottom-4 left-4 w-2 h-2 border-b border-l border-black/20" />
-                                <div className="absolute bottom-4 right-4 w-2 h-2 border-b border-r border-black/20" />
-
-                                {formData.images?.[0] ? (
-                                    <div className="absolute inset-0 opacity-10 blur-xl scale-110 pointer-events-none transition-all group-hover:blur-2xl">
-                                        <img src={formData.images[0]} className="w-full h-full object-cover" alt="" />
+                            <div className="space-y-4">
+                                <div className="flex gap-2">
+                                    <div className="relative flex-1">
+                                        <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-20" />
+                                        <input 
+                                            type="text"
+                                            placeholder="PASTE IMAGE URL (IMGUR, CLOUDINARY, ETC)"
+                                            value={imageUrlInput}
+                                            onChange={(e) => setImageUrlInput(e.target.value)}
+                                            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addImageUrl())}
+                                            className="w-full bg-zinc-50 border-none pl-12 pr-4 py-4 text-xs font-bold focus:ring-2 focus:ring-black transition-all"
+                                        />
                                     </div>
-                                ) : null}
-                                
-                                <div className="w-16 h-16 rounded-full bg-white shadow-sm flex items-center justify-center mb-2 group-hover:scale-110 transition-transform duration-500">
-                                    <Upload className={`w-6 h-6 z-10 transition-all ${uploading ? 'animate-pulse text-brand-green' : 'opacity-40'}`} />
-                                </div>
-
-                                <div className="z-10 space-y-2">
-                                    <p className="text-[12px] font-black uppercase tracking-[0.2em] text-black">
-                                        {uploading ? `Processing Bitstream: ${uploadProgress}%` : 'Ingest Visual Assets'}
-                                    </p>
-                                    <p className="text-[9px] font-medium opacity-30 uppercase tracking-widest max-w-[200px] mx-auto leading-relaxed">
-                                        Drag & drop studio captures or click to select archives
-                                    </p>
-                                </div>
-
-                                <input 
-                                    type="file" multiple accept="image/*" 
-                                    onChange={(e) => handleFileUpload(e.target.files)}
-                                    className="absolute inset-0 opacity-0 cursor-pointer"
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4">
-                                {formData.images?.map((url, idx) => (
-                                    <motion.div 
-                                        layout
-                                        initial={{ opacity: 0, scale: 0.9 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        key={idx} 
-                                        className="relative aspect-square rounded-2xl overflow-hidden border border-black/5 bg-zinc-100 group overflow-hidden"
+                                    <button 
+                                        type="button" 
+                                        onClick={addImageUrl}
+                                        className="bg-black text-white px-6 text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-800 transition-all rounded-sm"
                                     >
-                                        <div className="absolute top-2 left-2 z-20 bg-black/80 backdrop-blur-md text-[8px] font-mono text-white px-1.5 py-0.5 rounded uppercase tracking-tighter opacity-0 group-hover:opacity-100 transition-opacity">
-                                            BITMAP_0{idx + 1}
+                                        Inject
+                                    </button>
+                                </div>
+
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                    {formData.images?.map((url, idx) => (
+                                        <div key={idx} className="group relative aspect-square bg-zinc-100 rounded-xl overflow-hidden border border-black/5">
+                                            <img src={url} alt="" className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                <button 
+                                                    type="button" 
+                                                    onClick={() => removeImage(idx)}
+                                                    className="p-2 bg-red-500 text-white rounded-full hover:scale-110 transition-transform"
+                                                >
+                                                    <X className="w-3 h-3" />
+                                                </button>
+                                            </div>
+                                            <div className="absolute top-2 left-2 bg-black/50 text-[8px] text-white px-1.5 py-0.5 rounded font-mono">
+                                                {idx + 1}
+                                            </div>
                                         </div>
-                                        <img src={url} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" alt="" />
+                                    ))}
+                                    
+                                    {(!formData.images || formData.images.length < 8) && (
                                         <button 
-                                            type="button" 
-                                            onClick={(e) => { e.stopPropagation(); removeImage(idx); }}
-                                            className="absolute top-2 right-2 p-2 bg-white/90 backdrop-blur-md rounded-xl text-black opacity-0 group-hover:opacity-100 transition-all hover:bg-black hover:text-white transform hover:scale-110 shadow-lg z-30"
+                                            type="button"
+                                            onClick={() => {
+                                                const url = prompt('Direct Link Injection:');
+                                                if (url && url.match(/^https?:\/\/.+/i)) {
+                                                    setFormData(prev => ({ ...prev, images: [...(prev.images || []), url.trim()] }));
+                                                }
+                                            }}
+                                            className="aspect-square border-2 border-dashed border-black/5 rounded-xl flex flex-col items-center justify-center gap-2 opacity-30 hover:opacity-100 hover:border-black/20 transition-all"
                                         >
-                                          <X className="w-3 h-3" />
+                                            <ImageIcon className="w-4 h-4" />
+                                            <span className="text-[8px] font-black uppercase tracking-widest">Available</span>
                                         </button>
-                                        <div className="absolute bottom-0 inset-x-0 h-1/2 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-                                    </motion.div>
-                                ))}
-                                <button 
-                                    type="button"
-                                    onClick={() => {
-                                        const url = prompt('Direct Link Injection:');
-                                        if (url) setFormData(prev => ({ ...prev, images: [...(prev.images || []), url] }));
-                                    }}
-                                    className="aspect-square rounded-2xl border-2 border-dashed border-black/5 flex flex-col items-center justify-center bg-zinc-50 hover:bg-white hover:border-black/20 transition-all group gap-2"
-                                >
-                                    <LinkIcon className="w-4 h-4 opacity-10 group-hover:opacity-40 group-hover:rotate-45 transition-all duration-500" />
-                                    <span className="text-[8px] font-black uppercase tracking-widest opacity-20">Remote Link</span>
-                                </button>
+                                    )}
+                                </div>
                             </div>
                         </section>
 
@@ -861,8 +801,7 @@ export default function AdminPanel() {
                     <div className="pt-8">
                         <button 
                           type="submit" 
-                          disabled={uploading}
-                          className="w-full bg-black text-white py-6 text-xs font-black uppercase tracking-[0.3em] hover:bg-zinc-800 transition-all shadow-2xl disabled:opacity-50"
+                          className="w-full bg-black text-white py-6 text-xs font-black uppercase tracking-[0.3em] hover:bg-zinc-800 transition-all shadow-2xl"
                         >
                             {editingProduct ? 'Update Entry' : 'Verify & Publish'}
                         </button>
