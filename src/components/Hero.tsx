@@ -26,6 +26,16 @@ export default function Hero() {
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="space-y-8 z-10"
         >
+          {/* Mobile Hero Logo */}
+          <div className="lg:hidden block mb-6">
+            <img 
+              src="https://i.imgur.com/RYEs541.jpeg" 
+              alt="ThriftBD Logo" 
+              className="h-16 w-auto grayscale brightness-0 invert opacity-80 rounded-lg"
+              referrerPolicy="no-referrer"
+            />
+          </div>
+
           <div className="space-y-2">
             <h1 className="text-5xl md:text-7xl lg:text-[84px] leading-[0.95] font-black tracking-tighter">
               SUSTAINABLE STYLE.<br />
@@ -39,8 +49,9 @@ export default function Hero() {
           </p>
           
           <div className="flex flex-wrap gap-4 pt-4">
-            <a href="#drops" className="btn-primary">Shop Latest Drops</a>
-            <a href="/about" className="btn-secondary">Our Ethos</a>
+            <a href="/shop" className="btn-primary flex items-center gap-2 px-8 py-4">
+              Browse Latest Items
+            </a>
           </div>
         </motion.div>
 
@@ -74,10 +85,9 @@ export default function Hero() {
 
             {/* Content Profile Info */}
             <div className="absolute top-14 left-6 flex items-center gap-2 z-30">
-              <div className="w-8 h-8 rounded-full border border-white/40 flex items-center justify-center bg-brand-green/20">
-                <span className="text-[10px] font-black text-white italic">R</span>
+              <div className="w-8 h-8 rounded-full border border-white/40 flex items-center justify-center bg-black overflow-hidden bg-cover bg-center" style={{ backgroundImage: 'url(https://i.imgur.com/RYEs541.jpeg)' }}>
               </div>
-              <p className="text-[10px] font-bold text-white uppercase tracking-widest">THIRFTBD <span className="opacity-40 ml-2">6h</span></p>
+              <p className="text-[10px] font-bold text-white uppercase tracking-widest">THRIFTBD <span className="opacity-40 ml-2">6h</span></p>
             </div>
 
             {/* Main Phone Content */}

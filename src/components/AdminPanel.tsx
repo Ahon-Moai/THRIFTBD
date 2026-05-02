@@ -22,7 +22,9 @@ import {
   LayoutDashboard,
   Box,
   ClipboardList,
-  Menu
+  Menu,
+  FileJson,
+  Code
 } from 'lucide-react';
 import { 
   db, 
@@ -53,7 +55,7 @@ import { motion, AnimatePresence } from 'motion/react';
 const CATEGORIES = ['Tees', 'Sweatshirts', 'Outerwear', 'Denim', 'Accessories'];
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', 'One Size'];
 
-type Tab = 'dashboard' | 'inventory' | 'orders';
+type Tab = 'dashboard' | 'inventory' | 'orders' | 'json';
 
 export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
@@ -62,6 +64,7 @@ export default function AdminPanel() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [imageUrlInput, setImageUrlInput] = useState('');
+  const [jsonInput, setJsonInput] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -283,6 +286,12 @@ export default function AdminPanel() {
             isActive={activeTab === 'orders'} 
             onClick={() => { setActiveTab('orders'); setIsSidebarOpen(false); }} 
             badge={pendingOrders.length > 0 ? pendingOrders.length : undefined}
+          />
+          <SidebarLink 
+            icon={<FileJson className="w-4 h-4" />} 
+            label="JSON Portal" 
+            isActive={activeTab === 'json'} 
+            onClick={() => { setActiveTab('json'); setIsSidebarOpen(false); }} 
           />
         </nav>
 
@@ -587,6 +596,104 @@ export default function AdminPanel() {
                     </motion.div>
                   ))
                 )}
+              </div>
+            </motion.div>
+          )}
+
+          {activeTab === 'json' && (
+            <motion.div 
+              key="json"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-8"
+            >
+              <div>
+                <h1 className="text-4xl font-black tracking-tighter uppercase leading-none text-black">Data Portal</h1>
+                <p className="text-xs opacity-40 font-bold uppercase tracking-widest mt-2 px-1">Raw JSON Manifest System</p>
+              </div>
+
+              <div className="bg-white border border-black/5 p-8 rounded-3xl shadow-sm space-y-6">
+                <div className="flex items-center gap-3 p-4 bg-amber-50 border border-amber-100 rounded-2xl">
+                    <Code className="w-5 h-5 text-amber-600" />
+                    <div>
+                        <p className="text-[10px] font-black text-amber-800 uppercase tracking-widest">Protocol Warning</p>
+                        <p className="text-[9px] text-amber-700/70 uppercase font-bold mt-0.5 leading-relaxed">
+                            The injection system is currently in read-only mode for safety. 
+                            Use this portal to prepare your manifest structures.
+                        </p>
+                    </div>
+                </div>
+
+                <div className="space-y-4">
+                    <div className="flex justify-between items-end">
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">JSON Payload</label>
+                        <button 
+                            onClick={() => {
+                                const productsJson = JSON.stringify(products, null, 2);
+                                setJsonInput(productsJson);
+                            }}
+                            className="text-[9px] font-black uppercase tracking-widest text-brand-green hover:underline decoration-2 underline-offset-4"
+                        >
+                            Export Current Archive
+                        </button>
+                    </div>
+                    <textarea 
+                        rows={12}
+                        value={jsonInput}
+                        onChange={(e) => setJsonInput(e.target.value)}
+                        placeholder='[ { "name": "Item Name", "price": 1000, ... } ]'
+                        className="w-full bg-zinc-50 border-none p-6 text-[10px] font-mono leading-relaxed focus:ring-2 focus:ring-black transition-all rounded-2xl"
+                    />
+                </div>
+
+                <div className="flex gap-4">
+                    <button 
+                        disabled
+                        className="flex-1 bg-black/10 text-black/20 py-4 text-[10px] font-black uppercase tracking-widest rounded-xl cursor-not-allowed"
+                    >
+                        Initiate Bulk Injection (LOCKED)
+                    </button>
+                    <button 
+                        onClick={() => {
+                            try {
+                                JSON.parse(jsonInput);
+                                alert('MANIFEST VERIFIED: Syntax is correct.');
+                            } catch (e) {
+                                alert('SYNTAX ERROR: Invalid JSON structure.');
+                            }
+                        }}
+                        className="px-8 bg-zinc-50 border border-black/5 py-4 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-black hover:text-white transition-all"
+                    >
+                        Verify Logic
+                    </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-white border border-black/5 p-6 rounded-2xl">
+                    <h3 className="text-[10px] font-black uppercase tracking-widest mb-4">Injection Template</h3>
+                    <pre className="text-[8px] font-mono p-4 bg-zinc-50 rounded-xl overflow-x-auto whitespace-pre-wrap">
+{`{
+  "name": "Classic Tee",
+  "price": 850,
+  "category": "Tees",
+  "stock": 10,
+  "images": ["url1", "url2"],
+  "sizes": ["M", "L"],
+  "condition": "NEW"
+}`}
+                    </pre>
+                </div>
+                <div className="bg-white border border-black/5 p-6 rounded-2xl flex flex-col items-center justify-center text-center space-y-4">
+                    <div className="w-12 h-12 rounded-full bg-brand-green/10 flex items-center justify-center">
+                        <CheckCircle2 className="w-6 h-6 text-brand-green" />
+                    </div>
+                    <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest">Portal Operational</p>
+                        <p className="text-[9px] opacity-40 font-bold uppercase tracking-widest mt-1">Version 1.0.4 Beta</p>
+                    </div>
+                </div>
               </div>
             </motion.div>
           )}
