@@ -17,7 +17,7 @@ import ShopPage from './components/ShopPage';
 import Footer from './components/Footer';
 import CartDrawer from './components/CartDrawer';
 import { CartItem, Product } from './types';
-import { db, collection, onSnapshot, query, orderBy, limit } from './lib/firebase';
+import { supabase, isSupabaseConfigured } from './lib/supabase';
 
 // Lazy load heavy components for faster initial page load
 const AdminPanel = lazy(() => import('./components/AdminPanel'));
@@ -31,27 +31,46 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState<'home' | 'product' | 'shop' | 'admin' | 'checkout'>('home');
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
 
-  useEffect(() => {
-    const q = query(collection(db, 'products'), orderBy('createdAt', 'desc'), limit(40));
-    const unsub = onSnapshot(q, (snapshot) => {
-      const prods = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return { 
-          id: doc.id, 
-          ...data,
-          createdAt: data.createdAt?.toDate?.()?.toISOString() || '',
-          updatedAt: data.updatedAt?.toDate?.()?.toISOString() || ''
-        } as Product;
-      });
-      setProducts(prods);
+  const fetchProducts = async () => {
+    if (!isSupabaseConfigured) {
       setLoading(false);
-    }, (error) => {
-       // If no products collection exists yet, it might error if rules are strict or collection doesn't exist
-       // But usually onSnapshot handles it gracefully or we catch it.
-       console.warn('Could not fetch products, might be empty or missing permission:', error);
-       setLoading(false);
-    });
-    return unsub;
+      return;
+    }
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(40);
+    
+    if (error) {
+       console.warn('Could not fetch products:', error);
+    } else {
+       setProducts(data.map(p => ({
+         ...p,
+         createdAt: p.created_at,
+         updatedAt: p.updated_at
+       })) as Product[]);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) {
+      setLoading(false);
+      return;
+    }
+    fetchProducts();
+
+    const subscription = supabase
+      .channel('products-home')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => {
+        fetchProducts();
+      })
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Handle path based routing for a simple demo

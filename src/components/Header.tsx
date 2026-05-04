@@ -1,19 +1,23 @@
 import { ShoppingBag, User as UserIcon, Search, Menu, Moon, Sun, X } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { auth, db, doc, getDoc, setDoc, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, serverTimestamp } from '../lib/firebase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 export default function Header({ onCartClick }: { onCartClick: () => void }) {
-  const [user, setUser] = useState(auth.currentUser);
+  const [user, setUser] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isLoginFormOpen, setIsLoginFormOpen] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (u) => {
+    const handleUserChange = async (u: any) => {
       setUser(u);
       if (u) {
-        // Direct email check for admin access in dev/preview
         const admins = [
           'studiosventa@gmail.com', 
           'thriftbd71@gmail.com', 
@@ -22,35 +26,65 @@ export default function Header({ onCartClick }: { onCartClick: () => void }) {
         const userEmail = (u.email || '').toLowerCase();
         const isUserAdmin = admins.includes(userEmail);
         setIsAdmin(isUserAdmin);
-        
-        // Background sync with Firestore
-        const userDocRef = doc(db, 'users', u.uid);
-        const userDoc = await getDoc(userDocRef);
-        if (!userDoc.exists()) {
-          await setDoc(userDocRef, {
-            email: userEmail,
-            name: u.displayName,
-            photoURL: u.photoURL,
-            role: isUserAdmin ? 'admin' : 'user',
-            createdAt: serverTimestamp(),
-            lastLogin: serverTimestamp()
-          });
-        }
       } else {
         setIsAdmin(false);
       }
-    });
+    };
 
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
+
+    if (!isSupabaseConfigured) {
+      return () => window.removeEventListener('scroll', handleScroll);
+    }
+    
+    // Get initial session
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        handleUserChange(session?.user ?? null);
+      })
+      .catch(err => {
+        console.error('Session retrieval fault:', err);
+        handleUserChange(null);
+      });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      handleUserChange(session?.user ?? null);
+    });
+
     return () => {
-      unsub();
+      subscription.unsubscribe();
       window.removeEventListener('scroll', handleScroll);
     };
   }, []);
 
-  const login = () => signInWithPopup(auth, new GoogleAuthProvider());
-  const logout = () => signOut(auth);
+  const login = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+    setIsAuthenticating(true);
+    
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ 
+        email: email.trim(), 
+        password 
+      });
+      
+      if (error) throw error;
+      setIsLoginFormOpen(false);
+      setEmail('');
+      setPassword('');
+    } catch (err: any) {
+      console.error('Login error:', err);
+      setAuthError(err.message || 'Invalid credentials');
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+  
+  const logout = async () => {
+    await supabase.auth.signOut();
+  };
 
   const navigate = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
     e.preventDefault();
@@ -109,8 +143,8 @@ export default function Header({ onCartClick }: { onCartClick: () => void }) {
                   title={isAdmin ? "Enter Admin Panel" : "Profile"}
                 >
                   <img 
-                    src={user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName || 'User'}&background=black&color=white`} 
-                    alt={user.displayName || ''} 
+                    src={user.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${user.user_metadata?.full_name || user.email || 'User'}&background=black&color=white`} 
+                    alt={user.user_metadata?.full_name || ''} 
                     className="w-6 h-6 rounded-full border border-black/10 transition-transform active:scale-95"
                     referrerPolicy="no-referrer"
                   />
@@ -119,7 +153,7 @@ export default function Header({ onCartClick }: { onCartClick: () => void }) {
                   <div className="bg-white border border-brand-black/10 shadow-2xl p-4 min-w-[180px] rounded-xl">
                     <div className="mb-3">
                       <p className="text-[10px] font-black uppercase tracking-widest opacity-40 text-black">Connected As</p>
-                      <p className="text-[11px] font-bold text-black truncate">{user.displayName || user.email?.split('@')[0]}</p>
+                      <p className="text-[11px] font-bold text-black truncate">{user.user_metadata?.full_name || user.email?.split('@')[0]}</p>
                     </div>
                     <div className="h-px bg-black/5 mb-3" />
                     {isAdmin && (
@@ -137,9 +171,62 @@ export default function Header({ onCartClick }: { onCartClick: () => void }) {
                 </div>
               </div>
             ) : (
-              <button onClick={login} className="p-1 text-black hover:opacity-60 transition-opacity">
-                <UserIcon className="w-5 h-5" />
-              </button>
+              <div className="relative">
+                <button 
+                  onClick={() => setIsLoginFormOpen(!isLoginFormOpen)} 
+                  className={`p-1 transition-opacity ${isLoginFormOpen ? 'text-brand-green' : 'text-black hover:opacity-60'}`}
+                >
+                  <UserIcon className="w-5 h-5" />
+                </button>
+                
+                <AnimatePresence>
+                  {isLoginFormOpen && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute right-0 top-full mt-4 bg-white border border-black/10 shadow-2xl p-6 min-w-[280px] rounded-2xl z-50"
+                    >
+                      <form onSubmit={login} className="space-y-4">
+                        <div className="space-y-1">
+                          <p className="text-[9px] font-black uppercase tracking-widest opacity-40">Identifier</p>
+                          <input 
+                            type="email"
+                            required
+                            placeholder="EMAIL"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="w-full bg-zinc-50 border-none p-3 text-[10px] font-black uppercase tracking-widest rounded-xl focus:ring-1 focus:ring-black"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[9px] font-black uppercase tracking-widest opacity-40">Secure Token</p>
+                          <input 
+                            type="password"
+                            required
+                            placeholder="PASSWORD"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full bg-zinc-50 border-none p-3 text-[10px] font-black uppercase tracking-widest rounded-xl focus:ring-1 focus:ring-black"
+                          />
+                        </div>
+
+                        {authError && (
+                          <p className="text-[9px] font-bold text-red-500 uppercase tracking-tight text-center">{authError}</p>
+                        )}
+
+                        <button 
+                          type="submit"
+                          disabled={isAuthenticating}
+                          className="w-full bg-black text-white text-[10px] font-black uppercase tracking-widest py-3 rounded-xl hover:bg-zinc-800 transition-colors shadow-lg shadow-black/10"
+                        >
+                          {isAuthenticating ? 'VERIFYING...' : 'SIGN IN'}
+                        </button>
+                      </form>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             )}
           </div>
         </div>
@@ -175,7 +262,25 @@ export default function Header({ onCartClick }: { onCartClick: () => void }) {
                 </button>
               )}
               {!user && (
-                <button onClick={login} className="btn-primary w-full text-center">Sign In</button>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <input 
+                      type="email"
+                      placeholder="EMAIL"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full bg-black/5 border-none p-4 text-xs font-bold uppercase tracking-widest rounded-xl"
+                    />
+                    <input 
+                      type="password"
+                      placeholder="PASSWORD"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full bg-black/5 border-none p-4 text-xs font-bold uppercase tracking-widest rounded-xl"
+                    />
+                  </div>
+                  <button onClick={(e: any) => login(e)} className="btn-primary w-full text-center">Sign In</button>
+                </div>
               )}
               {user && (
                 <button onClick={logout} className="w-full text-center text-xs font-bold uppercase tracking-widest text-red-500 py-4">Sign Out</button>

@@ -26,29 +26,7 @@ import {
   FileJson,
   Code
 } from 'lucide-react';
-import { 
-  db, 
-  auth, 
-  handleFirestoreError, 
-  OperationType,
-  collection, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  doc, 
-  onSnapshot, 
-  query, 
-  orderBy, 
-  serverTimestamp,
-  signInWithPopup,
-  GoogleAuthProvider,
-  onAuthStateChanged,
-  ref,
-  uploadBytesResumable,
-  getDownloadURL,
-  uploadBytes,
-  storage
-} from '../lib/firebase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { Product } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -65,14 +43,40 @@ export default function AdminPanel() {
   const [loading, setLoading] = useState(true);
   const [imageUrlInput, setImageUrlInput] = useState('');
   const [jsonInput, setJsonInput] = useState('');
+  const [isInjecting, setIsInjecting] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [user, setUser] = useState(auth.currentUser);
+  const [user, setUser] = useState<any>(null);
   const [isAdminUser, setIsAdminUser] = useState(false);
+  const [protocolError, setProtocolError] = useState<string | null>(null);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
 
   useEffect(() => {
-    const unsubAuth = onAuthStateChanged(auth, (u) => {
+    if (!isSupabaseConfigured) {
+      setLoading(false);
+      return;
+    }
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        handleAuthChange(session?.user ?? null);
+      })
+      .catch(error => {
+        console.error('Session retrieval failed:', error);
+        if (error?.message?.includes('API key') || error?.message?.includes('apikey')) {
+          setProtocolError('INVALID_API_KEY');
+        }
+        handleAuthChange(null);
+      });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      handleAuthChange(session?.user ?? null);
+    });
+
+    const handleAuthChange = (u: any) => {
       setUser(u);
       if (u) {
         const admins = [
@@ -82,20 +86,31 @@ export default function AdminPanel() {
         ];
         const userEmail = (u.email || '').toLowerCase();
         setIsAdminUser(admins.includes(userEmail));
-        console.log('Admin Status Verification:', { email: userEmail, isAdmin: admins.includes(userEmail) });
       } else {
         setIsAdminUser(false);
       }
-    });
-    return () => unsubAuth();
+    };
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const login = async () => {
-    const provider = new GoogleAuthProvider();
+  const login = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+    setIsAuthenticating(true);
+    
     try {
-      await signInWithPopup(auth, provider);
-    } catch (error) {
-      console.error('Login failed:', error);
+      const { error } = await supabase.auth.signInWithPassword({ 
+        email: email.trim(), 
+        password 
+      });
+      
+      if (error) throw error;
+    } catch (err: any) {
+      console.error('Authentication Fault:', err);
+      setAuthError(err.message || 'Invalid credentials');
+    } finally {
+      setIsAuthenticating(false);
     }
   };
   
@@ -113,40 +128,64 @@ export default function AdminPanel() {
     description: ''
   });
 
-  useEffect(() => {
-    // Products Listener
-    const qProducts = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
-    const unsubProducts = onSnapshot(qProducts, (snapshot) => {
-      const prods = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return { 
-          id: doc.id, 
-          ...data,
-          createdAt: data.createdAt?.toDate?.()?.toISOString() || '',
-          updatedAt: data.updatedAt?.toDate?.()?.toISOString() || ''
-        } as Product;
-      });
-      setProducts(prods);
-      setLoading(false);
-    }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, 'products');
-    });
+  const fetchProducts = async () => {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching products:', error);
+    } else {
+      setProducts(data.map(p => ({
+        ...p,
+        createdAt: p.created_at,
+        updatedAt: p.updated_at
+      })) as Product[]);
+    }
+    setLoading(false);
+  };
 
-    // Orders Listener
-    const qOrders = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
-    const unsubOrders = onSnapshot(qOrders, (snapshot) => {
-      const ords = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setOrders(ords);
-    }, (error) => {
+  const fetchOrders = async () => {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) {
       console.warn('Orders permission notification:', error);
-    });
+    } else {
+      setOrders(data.map(o => ({
+        ...o,
+        totalAmount: o.total_amount,
+        customer: o.customer
+      })));
+    }
+  };
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+    fetchProducts();
+    fetchOrders();
+
+    // Set up real-time subscriptions if desired
+    const productSubscription = supabase
+      .channel('products-all')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => {
+        fetchProducts();
+      })
+      .subscribe();
+
+    const orderSubscription = supabase
+      .channel('orders-all')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
+        fetchOrders();
+      })
+      .subscribe();
 
     return () => {
-      unsubProducts();
-      unsubOrders();
+      productSubscription.unsubscribe();
+      orderSubscription.unsubscribe();
     };
   }, []);
 
@@ -177,6 +216,45 @@ export default function AdminPanel() {
     }));
   };
 
+  const handleBulkInjection = async () => {
+    if (!jsonInput.trim()) return;
+    if (!user || !isAdminUser) {
+      alert('ADMIN ACCESS REQUIRED: Unauthorized injection sequence.');
+      return;
+    }
+
+    try {
+      const data = JSON.parse(jsonInput);
+      const items = Array.isArray(data) ? data : [data];
+      
+      if (!window.confirm(`PROTOCOL INITIATION: Inject ${items.length} items into the live archive?`)) return;
+      
+      setIsInjecting(true);
+      
+      for (const item of items) {
+        const { id: _id, createdAt: _ca, updatedAt: _ua, ...cleanItem } = item;
+        
+        const { error } = await supabase
+          .from('products')
+          .insert({
+            ...cleanItem,
+            updated_at: new Date().toISOString()
+          });
+        
+        if (error) throw error;
+      }
+      
+      setIsInjecting(false);
+      setJsonInput('');
+      alert('INJECTION SUCCESSFUL: Archive has been populated.');
+      fetchProducts();
+    } catch (error: any) {
+      console.error('Injection Error:', error);
+      setIsInjecting(false);
+      alert(`INJECTION FAILURE: ${error.message}`);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
@@ -184,38 +262,34 @@ export default function AdminPanel() {
       return;
     }
     
-    // Check for large Base64 payloads
-    const payloadSize = JSON.stringify(formData).length;
-    if (payloadSize > 800000) { // ~800KB (limit is 1MB total)
-      alert('ARCHIVE FAULT: Visual assets are too large. Please reduce image quality or count to stay under the 1MB injection limit.');
-      return;
-    }
-
     try {
-      const { id, createdAt, updatedAt, ...cleanData } = formData as any;
-      console.log('Sending archive packet...', { type: editingProduct ? 'UPDATE' : 'CREATE', size: payloadSize });
+      const { id: _id, createdAt: _ca, updatedAt: _ua, ...cleanData } = formData as any;
+      console.log('Sending archive packet...', { type: editingProduct ? 'UPDATE' : 'CREATE' });
       
       if (editingProduct) {
-        await updateDoc(doc(db, 'products', editingProduct.id), {
-          ...cleanData,
-          updatedAt: serverTimestamp()
-        });
+        const { error } = await supabase
+          .from('products')
+          .update({
+            ...cleanData,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', editingProduct.id);
+        if (error) throw error;
       } else {
-        await addDoc(collection(db, 'products'), {
-          ...cleanData,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        });
+        const { error } = await supabase
+          .from('products')
+          .insert({
+            ...cleanData,
+            updated_at: new Date().toISOString()
+          });
+        if (error) throw error;
       }
       setIsModalOpen(false);
       alert(editingProduct ? 'ARCHIVE UPDATED' : 'ARCHIVE PUBLISHED');
+      fetchProducts();
     } catch (error: any) {
       console.error('Submission Fault:', error);
-      const errorMessage = error.message && error.message.startsWith('{') 
-        ? JSON.parse(error.message).error 
-        : error.message;
-      alert(`SUBMISSION FAILED: ${errorMessage || 'Unknown Protocol Error'}`);
-      handleFirestoreError(error, editingProduct ? OperationType.UPDATE : OperationType.CREATE, 'products');
+      alert(`SUBMISSION FAILED: ${error.message || 'Unknown Protocol Error'}`);
     }
   };
 
@@ -225,11 +299,98 @@ export default function AdminPanel() {
       return;
     }
     try {
-      await updateDoc(doc(db, 'orders', orderId), { status });
+      const { error } = await supabase
+        .from('orders')
+        .update({ status })
+        .eq('id', orderId);
+      if (error) throw error;
+      fetchOrders();
     } catch (error) {
       console.error('Update order failed:', error);
     }
   };
+
+  if (!user) {
+    return (
+      <div className="flex-1 p-8 pt-[120px] flex flex-col items-center justify-center min-h-[60vh] text-center max-w-md mx-auto space-y-8">
+        <div className="w-20 h-20 rounded-full bg-black flex items-center justify-center text-white">
+          <User className="w-10 h-10" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-3xl font-black tracking-tighter uppercase leading-none text-black">Restricted Access</h2>
+          <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest">Protocol Identification Required</p>
+        </div>
+
+        <form onSubmit={login} className="w-full space-y-4 bg-white p-8 rounded-3xl border border-black/5 text-left shadow-xl">
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <label className="text-[10px] font-black uppercase tracking-widest opacity-40">Identifier (Email)</label>
+              <input 
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="ADMIN@THRIFTBD.COM"
+                className="w-full bg-zinc-50 border-none p-4 text-[11px] font-black uppercase tracking-widest focus:ring-2 focus:ring-black transition-all rounded-xl"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-black uppercase tracking-widest opacity-40">Security Token (Password)</label>
+              <input 
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full bg-zinc-50 border-none p-4 text-xs font-black focus:ring-2 focus:ring-black transition-all rounded-xl"
+              />
+            </div>
+          </div>
+
+          {authError && (
+            <div className="p-3 bg-red-50 border border-red-100 rounded-xl">
+              <p className="text-[10px] font-black text-red-600 uppercase tracking-widest text-center">{authError}</p>
+            </div>
+          )}
+
+          <button 
+            type="submit"
+            disabled={isAuthenticating}
+            className={`w-full py-4 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all ${
+              isAuthenticating ? 'bg-zinc-400 cursor-not-allowed' : 'bg-black text-white hover:bg-zinc-800 shadow-lg'
+            }`}
+          >
+            {isAuthenticating ? 'Authenticating...' : 'Initiate Access'}
+          </button>
+        </form>
+
+        <p className="text-[10px] font-black uppercase tracking-widest opacity-30 animate-pulse">Waiting for secure handshake...</p>
+      </div>
+    );
+  }
+
+  if (!isAdminUser) {
+    return (
+      <div className="flex-1 p-8 pt-[120px] flex flex-col items-center justify-center min-h-[60vh] text-center max-w-2xl mx-auto space-y-8">
+        <div className="w-20 h-20 rounded-full bg-red-50 flex items-center justify-center text-red-600">
+          <X className="w-10 h-10" />
+        </div>
+        <div className="space-y-4">
+          <h2 className="text-3xl font-black tracking-tighter uppercase leading-none">Security Exception</h2>
+          <p className="text-zinc-500 font-medium leading-relaxed">
+            Your credentials have been validated, but your identity is not authorized for this portal. 
+            Contact the system administrator to whitelist <span className="font-bold text-black">{user.email}</span>.
+          </p>
+        </div>
+        <button 
+          onClick={() => supabase.auth.signOut()}
+          className="bg-black text-white px-8 py-3 text-[10px] font-black uppercase tracking-widest rounded-full hover:bg-zinc-800 transition-all shadow-lg"
+        >
+          Terminate Session
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-zinc-50 pt-[80px] md:pt-[100px]">
@@ -297,13 +458,19 @@ export default function AdminPanel() {
 
         <div className="p-6 mt-auto border-t border-black/5">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-[10px] font-bold shrink-0">
-              {user ? user.email?.[0].toUpperCase() : '??'}
+            <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-[10px] font-bold shrink-0 overflow-hidden">
+              {user?.user_metadata?.avatar_url ? (
+                <img src={user.user_metadata.avatar_url} alt="" className="w-full h-full object-cover" />
+              ) : (
+                user?.email?.[0].toUpperCase() || '??'
+              )}
             </div>
             <div className="flex flex-col overflow-hidden">
-              <span className="text-xs font-bold uppercase tracking-tight truncate">{user ? user.email?.split('@')[0] : 'Guest'}</span>
+              <span className="text-xs font-bold uppercase tracking-tight truncate">
+                {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Guest'}
+              </span>
               <button 
-                onClick={user ? () => auth.signOut() : login}
+                onClick={user ? () => supabase.auth.signOut() : login}
                 className="text-[9px] text-brand-green uppercase font-bold text-left hover:underline"
               >
                 {user ? 'Terminate Session' : 'Initiate Access'}
@@ -480,21 +647,19 @@ export default function AdminPanel() {
                                   
                                   if (window.confirm(`ERASE ARCHIVE: ${p.name}?\n\nThis action is permanent and will remove the item from all listings.`)) {
                                     try {
-                                      const productRef = doc(db, 'products', p.id);
                                       console.log('Initiating archive erasure sequence...', p.id);
-                                      await deleteDoc(productRef);
+                                      const { error } = await supabase
+                                        .from('products')
+                                        .delete()
+                                        .eq('id', p.id);
+                                      
+                                      if (error) throw error;
+                                      
                                       alert('ARCHIVE DELETED SUCCESSFULLY');
+                                      fetchProducts();
                                     } catch (error: any) {
                                       console.error('Deletion Protocol Failure:', error);
-                                      let detailedError = error.message;
-                                      try {
-                                        if (error.message && error.message.startsWith('{')) {
-                                          detailedError = JSON.parse(error.message).error;
-                                        }
-                                      } catch (e) {}
-                                      
-                                      alert(`DELETION FAILED: ${detailedError || 'Permission Denied or System Fault'}`);
-                                      handleFirestoreError(error, OperationType.DELETE, `products/${p.id}`);
+                                      alert(`DELETION FAILED: ${error.message || 'Permission Denied or System Fault'}`);
                                     }
                                   }
                                 }}
@@ -649,10 +814,15 @@ export default function AdminPanel() {
 
                 <div className="flex gap-4">
                     <button 
-                        disabled
-                        className="flex-1 bg-black/10 text-black/20 py-4 text-[10px] font-black uppercase tracking-widest rounded-xl cursor-not-allowed"
+                        onClick={handleBulkInjection}
+                        disabled={isInjecting || !jsonInput.trim()}
+                        className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${
+                            isInjecting 
+                            ? 'bg-amber-500 text-white animate-pulse' 
+                            : 'bg-brand-green text-white hover:bg-brand-green/80 shadow-lg shadow-brand-green/20'
+                        }`}
                     >
-                        Initiate Bulk Injection (LOCKED)
+                        {isInjecting ? 'Injecting Bitstream...' : 'Initiate Bulk Injection'}
                     </button>
                     <button 
                         onClick={() => {

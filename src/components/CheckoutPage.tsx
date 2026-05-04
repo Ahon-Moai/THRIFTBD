@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { ChevronRight, ShieldCheck, Truck, MessageSquare, CreditCard, Phone, Smartphone, ArrowLeft } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ChevronRight, ShieldCheck, Truck, MessageSquare, CreditCard, Phone, Smartphone, ArrowLeft, Loader2 } from 'lucide-react';
 import { CartItem } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
+import { supabase } from '../lib/supabase';
 
 interface CheckoutPageProps {
   items: CartItem[];
@@ -11,6 +12,8 @@ interface CheckoutPageProps {
 export default function CheckoutPage({ items, onBack }: CheckoutPageProps) {
   const [shippingMethod, setShippingMethod] = useState<'inside' | 'outside'>('inside');
   const [paymentMethod, setPaymentMethod] = useState<'cod' | 'whatsapp'>('whatsapp');
+  const [user, setUser] = useState<any>(null);
+  const [isOrdering, setIsOrdering] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -22,25 +25,69 @@ export default function CheckoutPage({ items, onBack }: CheckoutPageProps) {
     bkashLastDigits: ''
   });
 
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => setUser(user));
+  }, []);
+
   const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const shippingCharge = shippingMethod === 'inside' ? 90 : 160;
   const total = subtotal + shippingCharge;
 
-  const handlePlaceOrder = () => {
-    if (paymentMethod === 'whatsapp') {
-      const message = `*NEW ORDER - THIRFTBD*%0A%0A` +
-        `*Customer:* ${formData.firstName} ${formData.lastName}%0A` +
-        `*Phone:* ${formData.phone}%0A` +
-        `*Address:* ${formData.address}, ${formData.city}%0A%0A` +
-        `*Items:*%0A${items.map(item => `- ${item.name} (${item.size}) x${item.quantity}`).join('%0A')}%0A%0A` +
-        `*Shipping:* ${shippingMethod === 'inside' ? 'Inside Dhaka' : 'Outside Dhaka'} (৳${shippingCharge})%0A` +
-        `*Total:* ৳${total}%0A` +
-        `*Payment:* WhatsApp / bKash Prefilled%0A` +
-        `*bKash Digits:* ${formData.bkashLastDigits}`;
-      
-      window.open(`https://wa.me/8801825057141?text=${message}`, '_blank');
-    } else {
-      alert('Order placed successfully! (COD)');
+  const handlePlaceOrder = async () => {
+    if (!formData.phone || !formData.address || !formData.firstName) {
+      alert('REQUIRED FIELDS: Please provide your core details to continue.');
+      return;
+    }
+
+    setIsOrdering(true);
+
+    try {
+      // 1. Add order to Supabase
+      const { data: order, error } = await supabase
+        .from('orders')
+        .insert({
+          user_id: user?.id || null, // Allow guest checkout if needed, though usually auth is better
+          customer_email: user?.email || null,
+          items: items,
+          total_amount: total,
+          status: 'pending',
+          customer: {
+            name: `${formData.firstName} ${formData.lastName}`,
+            phone: formData.phone,
+            address: `${formData.address}, ${formData.city}, ${formData.state} ${formData.zipCode}`,
+            bkashDigits: formData.bkashLastDigits
+          }
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // 2. Open WhatsApp if selected
+      if (paymentMethod === 'whatsapp') {
+        const message = `*NEW ORDER - THIRFTBD*%0A%0A` +
+          `*Order ID:* ${order.id?.slice(-8).toUpperCase()}%0A` +
+          `*Customer:* ${formData.firstName} ${formData.lastName}%0A` +
+          `*Phone:* ${formData.phone}%0A` +
+          `*Address:* ${formData.address}, ${formData.city}%0A%0A` +
+          `*Items:*%0A${items.map(item => `- ${item.name} (${item.size}) x${item.quantity}`).join('%0A')}%0A%0A` +
+          `*Shipping:* ${shippingMethod === 'inside' ? 'Inside Dhaka' : 'Outside Dhaka'} (৳${shippingCharge})%0A` +
+          `*Total:* ৳${total}%0A` +
+          `*Payment:* WhatsApp / bKash Prefilled%0A` +
+          `*bKash Digits:* ${formData.bkashLastDigits}`;
+        
+        window.open(`https://wa.me/8801825057141?text=${message}`, '_blank');
+      } else {
+        alert(`SUCCESS: Your order #${order.id?.slice(-8).toUpperCase()} has been submitted. Please wait for confirmation.`);
+      }
+
+      // 3. Clear cart/Redirect - for now just go back home
+      onBack();
+    } catch (error: any) {
+      console.error('Order Fault:', error);
+      alert(`ORDER FAILED: ${error.message || 'Unknown protocol error'}`);
+    } finally {
+      setIsOrdering(false);
     }
   };
 

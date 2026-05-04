@@ -1,0 +1,184 @@
+[
+  {
+    "id": "3hoEJaHDey8SzOWf0khX",
+    "description": "Chest-44\nLength-28",
+    "tags": [],
+    "createdAt": "2026-05-02T17:46:11.234Z",
+    "status": "active",
+    "stock": 1,
+    "colors": [],
+    "images": [
+      "https://i.ibb.co.com/99g3pnqR/IMG-2781.jpg"
+    ],
+    "category": "Tees",
+    "condition": "9/10",
+    "price": 499,
+    "updatedAt": "2026-05-02T17:46:11.234Z",
+    "name": "Brand : Ra Ralph Lauren ",
+    "sizes": [
+      "XL"
+    ]
+  },
+  {
+    "id": "UPWHEnqz9U9XH7IEMAm2",
+    "updatedAt": "2026-05-02T17:37:41.885Z",
+    "name": "Barand : RaRalph Lauren ",
+    "sizes": [
+      "XL"
+    ],
+    "category": "Tees",
+    "condition": "9/10",
+    "price": 499,
+    "images": [
+      "https://i.ibb.co.com/KchrdfBF/IMG-2851.jpg"
+    ],
+    "createdAt": "2026-05-02T17:37:41.885Z",
+    "status": "active",
+    "stock": 1,
+    "colors": [],
+    "tags": [],
+    "description": "Chest -44\nLength-29"
+  },
+  {
+    "id": "9AsW4BKk2RYTlHb0v6Yk",
+    "tags": [],
+    "description": "Chest-46\nLength-30",
+    "stock": 1,
+    "status": "active",
+    "createdAt": "2026-05-02T17:29:03.169Z",
+    "colors": [],
+    "images": [
+      "https://i.ibb.co.com/d4KdyrMj/IMG-2855.jpg"
+    ],
+    "name": "Brand : mind bridge ",
+    "updatedAt": "2026-05-02T17:37:58.655Z",
+    "sizes": [
+      "XXL"
+    ],
+    "category": "Tees",
+    "price": 449,
+    "condition": "9/10"
+  },
+  {
+    "id": "OSQQzGvB1UuCzOn3wmBY",
+    "sizes": [
+      "L"
+    ],
+    "name": "Brand : Calvin klein ",
+    "updatedAt": "2026-05-02T17:27:12.586Z",
+    "price": 589,
+    "condition": "9/10",
+    "category": "Tees",
+    "images": [
+      "https://i.ibb.co.com/hJYxNtQ6/IMG-2857.jpg"
+    ],
+    "colors": [],
+    "stock": 1,
+    "createdAt": "2026-05-02T17:27:12.586Z",
+    "status": "active",
+    "tags": [],
+    "description": "Chest-42\nLength-28"
+  },
+  {
+    "id": "7TnZjHUebJiPCL15CIR9",
+    "condition": "9/10",
+    "price": 589,
+    "category": "Tees",
+    "sizes": [
+      "L"
+    ],
+    "updatedAt": "2026-05-02T17:23:33.357Z",
+    "name": "Brand : Bean pole ",
+    "images": [
+      "https://i.ibb.co.com/VWQhccGC/IMG-2878.jpg"
+    ],
+    "colors": [],
+    "status": "active",
+    "createdAt": "2026-05-02T17:23:33.357Z",
+    "stock": 1,
+    "description": "Bean pole \nChest-42\nLength-29",
+    "tags": []
+  },
+  {
+    "id": "DDRwX3iT4XXdaH8p3Lku",
+    "tags": [],
+    "description": " TEENIE WEENIE\nChest -40\nLength-27",
+    "colors": [],
+    "createdAt": "2026-05-02T17:17:36.087Z",
+    "status": "active",
+    "stock": 1,
+    "images": [
+      "https://i.ibb.co.com/SGML1mD/IMG-2770.jpg"
+    ],
+    "sizes": [
+      "M"
+    ],
+    "updatedAt": "2026-05-02T17:17:36.087Z",
+    "name": "Thrift shrit Teenie weenie",
+    "condition": "9/10",
+    "price": 549,
+    "category": "Tees"
+  },
+  {
+    "id": "3yeGqzitMzk7ajU2Blg5",
+    "images": [
+      "https://i.imgur.com/GOl2gAY.jpeg"
+    ],
+    "condition": "9/10",
+    "price": 589,
+    "category": "Tees",
+    "sizes": [
+      "S"
+    ],
+    "updatedAt": "2026-05-02T12:39:34.486Z",
+    "name": "Thrift shrit RaRalph Lauren ",
+    "description": "Ralph Lauren\nChest-36\nLength-24",
+    "tags": [],
+    "colors": [],
+    "status": "active",
+    "createdAt": "2026-05-02T12:39:34.486Z",
+    "stock": 1
+  },
+  {
+    "id": "iZ1qZexoim9vYx2GGJoZ",
+    "images": [
+      "https://i.imgur.com/dqAiPXu_d.jpeg?maxwidth=520&shape=thumb&fidelity=high"
+    ],
+    "price": 589,
+    "condition": "9/10",
+    "category": "Tees",
+    "sizes": [
+      "One Size"
+    ],
+    "name": "Thrift shrit Ralph lauren ",
+    "updatedAt": "2026-05-02T17:47:35.725Z",
+    "description": "Ralph Lauren \nChest-54\nLength-32",
+    "tags": [],
+    "colors": [],
+    "stock": 1,
+    "createdAt": "2026-05-02T12:31:59.856Z",
+    "status": "active"
+  },
+  {
+    "id": "VgyUFEvn10vy3NU1ZTi1",
+    "description": "Ralph Lauren \nChest-46\nLength-30",
+    "tags": [
+      "THRIFTING SHRIT"
+    ],
+    "colors": [],
+    "stock": 1,
+    "createdAt": "2026-05-02T12:17:33.773Z",
+    "status": "active",
+    "images": [
+      "https://i.imgur.com/FBgVJWo_d.jpeg?maxwidth=520&shape=thumb&fidelity=high"
+    ],
+    "price": 599,
+    "condition": "9/10",
+    "category": "Tees",
+    "sizes": [
+      "XXL"
+    ],
+    "name": "Thrift shrit RaRalph Lauren ",
+    "updatedAt": "2026-05-02T12:17:33.773Z"
+  }
+]
