@@ -18,6 +18,7 @@ import Footer from './components/Footer';
 import CartDrawer from './components/CartDrawer';
 import { CartItem, Product } from './types';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
+import localProducts from './data/products.json';
 
 // Lazy load heavy components for faster initial page load
 const AdminPanel = lazy(() => import('./components/AdminPanel'));
@@ -33,6 +34,7 @@ export default function App() {
 
   const fetchProducts = async () => {
     if (!isSupabaseConfigured) {
+      setProducts(localProducts as Product[]);
       setLoading(false);
       return;
     }
@@ -43,7 +45,10 @@ export default function App() {
       .limit(40);
     
     if (error) {
-       console.warn('Could not fetch products:', error);
+       console.warn('Could not fetch products from Supabase, using local fallback:', error);
+       setProducts(localProducts as Product[]);
+    } else if (!data || data.length === 0) {
+       setProducts(localProducts as Product[]);
     } else {
        setProducts(data.map(p => ({
          ...p,
@@ -55,11 +60,9 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (!isSupabaseConfigured) {
-      setLoading(false);
-      return;
-    }
     fetchProducts();
+
+    if (!isSupabaseConfigured) return;
 
     const subscription = supabase
       .channel('products-home')
