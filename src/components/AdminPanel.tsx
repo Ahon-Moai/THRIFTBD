@@ -607,7 +607,7 @@ export default function AdminPanel() {
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-4">
                             <div className="w-12 h-16 bg-zinc-100 rounded-lg overflow-hidden flex-shrink-0">
-                                {p.images?.[0] && <img src={p.images[0]} alt="" className="w-full h-full object-cover grayscale" />}
+                                {p.images?.[0] && <img src={p.images[0]} alt="" className="w-full h-full object-cover" />}
                             </div>
                             <div>
                                 <p className="text-[11px] font-black uppercase tracking-tight text-black">{p.name}</p>
