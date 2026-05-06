@@ -4,7 +4,7 @@ import { Filter, SlidersHorizontal, ChevronDown, Check } from 'lucide-react';
 import { Product } from '../types';
 import ProductCard from './ProductCard';
 
-const CATEGORIES = ['All', 'Thrift Shirts', 'Denims Shirts', 'Denims Jacket', 'Tracksuit', 'T-shirt', 'Sweatshirts', 'Outerwear', 'Accessories'];
+const CATEGORIES = ['All', 'Thrift Shirts', 'Denims Shirts', 'Denims Jacket', 'Tracksuit', 'Sweatshirts', 'Outerwear', 'Accessories'];
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
 export default function ShopPage({ products }: { products: Product[] }) {
@@ -26,7 +26,19 @@ export default function ShopPage({ products }: { products: Product[] }) {
   }, []);
 
   const filteredProducts = products.filter(p => {
-    const categoryMatch = selectedCategory === 'All' || p.category.toLowerCase().includes(selectedCategory.toLowerCase());
+    let categoryMatch = selectedCategory === 'All';
+    
+    if (!categoryMatch) {
+      const pCat = p.category.toLowerCase();
+      const sCat = selectedCategory.toLowerCase();
+      
+      if (selectedCategory === 'Thrift Shirts') {
+        categoryMatch = pCat === 'thrift shirts' || pCat === 'tees' || pCat === 't-shirt';
+      } else {
+        categoryMatch = pCat === sCat;
+      }
+    }
+
     const sizeMatch = !selectedSize || (p.sizes && p.sizes.includes(selectedSize));
     return categoryMatch && sizeMatch;
   });

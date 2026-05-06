@@ -30,7 +30,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { Product } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 
-const CATEGORIES = ['Thrift Shirts', 'Denims Shirts', 'Denims Jacket', 'Tracksuit', 'T-shirt', 'Sweatshirts', 'Outerwear', 'Accessories'];
+const CATEGORIES = ['Thrift Shirts', 'Denims Shirts', 'Denims Jacket', 'Tracksuit', 'Sweatshirts', 'Outerwear', 'Accessories'];
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', 'One Size'];
 
 type Tab = 'dashboard' | 'inventory' | 'orders' | 'json';
@@ -861,7 +861,7 @@ export default function AdminPanel() {
 {`{
   "name": "Classic Tee",
   "price": 850,
-  "category": "Tees",
+  "category": "Thrift Shirts",
   "stock": 10,
   "images": ["url1", "url2"],
   "sizes": ["M", "L"],
