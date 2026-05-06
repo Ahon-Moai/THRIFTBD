@@ -30,7 +30,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { Product } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 
-const CATEGORIES = ['Tees', 'Sweatshirts', 'Outerwear', 'Denim', 'Accessories'];
+const CATEGORIES = ['Thrift Shirts', 'Denims Shirts', 'Denims Jacket', 'Tracksuit', 'T-shirt', 'Sweatshirts', 'Outerwear', 'Accessories'];
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', 'One Size'];
 
 type Tab = 'dashboard' | 'inventory' | 'orders' | 'json';
@@ -117,7 +117,7 @@ export default function AdminPanel() {
   const [formData, setFormData] = useState<Partial<Product>>({
     name: '',
     price: 0,
-    category: 'Tees',
+    category: 'Thrift Shirts',
     condition: '9/10',
     stock: 1,
     status: 'active',
@@ -307,6 +307,29 @@ export default function AdminPanel() {
       fetchOrders();
     } catch (error) {
       console.error('Update order failed:', error);
+    }
+  };
+
+  const deleteOrder = async (orderId: string) => {
+    if (!user || !isAdminUser) {
+      alert('ADMIN ACCESS REQUIRED: Unauthorized deletion sequence.');
+      return;
+    }
+    
+    if (window.confirm('ERASE ORDER: Are you sure you want to delete this order from the live feed?')) {
+      try {
+        const { error } = await supabase
+          .from('orders')
+          .delete()
+          .eq('id', orderId);
+        
+        if (error) throw error;
+        alert('ORDER DELETED SUCCESSFULLY');
+        fetchOrders();
+      } catch (error: any) {
+        console.error('Deletion Fault:', error);
+        alert(`DELETION FAILED: ${error.message}`);
+      }
     }
   };
 
@@ -562,7 +585,7 @@ export default function AdminPanel() {
                     setFormData({
                       name: '',
                       price: 0,
-                      category: 'Tees',
+                      category: 'Thrift Shirts',
                       condition: 'NEW',
                       stock: 1,
                       status: 'active',
@@ -740,22 +763,13 @@ export default function AdminPanel() {
                       <div className="w-px bg-black/5 hidden md:block" />
 
                       <div className="md:w-64 flex flex-col justify-center gap-2">
-                        <p className="text-[9px] font-black uppercase tracking-widest opacity-30 mb-2">Action Sequence</p>
+                        <p className="text-[9px] font-black uppercase tracking-widest opacity-30 mb-2">Management Ops</p>
                         <button 
-                          onClick={() => updateOrderStatus(order.id, 'processing')}
-                          className={`w-full py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
-                            order.status === 'processing' ? 'bg-black text-white' : 'bg-zinc-50 border border-black/5 hover:border-black/20'
-                          }`}
+                          onClick={() => deleteOrder(order.id)}
+                          className="w-full py-4 rounded-xl text-[9px] font-black uppercase tracking-widest bg-red-50 text-red-600 border border-red-100 hover:bg-red-600 hover:text-white transition-all flex items-center justify-center gap-2"
                         >
-                          Fulfillment
-                        </button>
-                        <button 
-                           onClick={() => updateOrderStatus(order.id, 'shipped')}
-                          className={`w-full py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
-                            order.status === 'shipped' ? 'bg-brand-green text-white shadow-lg' : 'bg-zinc-50 border border-black/5 hover:border-black/20 text-black/40'
-                          }`}
-                        >
-                          Ship Packet
+                          <Trash2 className="w-3.5 h-3.5" />
+                          Delete Order
                         </button>
                       </div>
                     </motion.div>

@@ -10,7 +10,7 @@ interface CheckoutPageProps {
 }
 
 export default function CheckoutPage({ items, onBack }: CheckoutPageProps) {
-  const [shippingMethod, setShippingMethod] = useState<'inside' | 'outside'>('inside');
+  const [shippingMethod, setShippingMethod] = useState<'dhaka' | 'outside' | 'chittagong'>('dhaka');
   const [paymentMethod, setPaymentMethod] = useState<'cod' | 'whatsapp'>('whatsapp');
   const [user, setUser] = useState<any>(null);
   const [isOrdering, setIsOrdering] = useState(false);
@@ -30,7 +30,9 @@ export default function CheckoutPage({ items, onBack }: CheckoutPageProps) {
   }, []);
 
   const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  const shippingCharge = shippingMethod === 'inside' ? 90 : 160;
+  const shippingCharge = 
+    shippingMethod === 'dhaka' ? 120 : 
+    shippingMethod === 'chittagong' ? 80 : 140;
   const total = subtotal + shippingCharge;
 
   const handlePlaceOrder = async () => {
@@ -65,13 +67,17 @@ export default function CheckoutPage({ items, onBack }: CheckoutPageProps) {
 
       // 2. Open WhatsApp if selected
       if (paymentMethod === 'whatsapp') {
+        const shippingLabel = 
+          shippingMethod === 'dhaka' ? 'Dhaka' : 
+          shippingMethod === 'chittagong' ? 'Chittagong' : 'Outside Dhaka';
+        
         const message = `*NEW ORDER - THIRFTBD*%0A%0A` +
           `*Order ID:* ${order.id?.slice(-8).toUpperCase()}%0A` +
           `*Customer:* ${formData.firstName} ${formData.lastName}%0A` +
           `*Phone:* ${formData.phone}%0A` +
           `*Address:* ${formData.address}, ${formData.city}%0A%0A` +
           `*Items:*%0A${items.map(item => `- ${item.name} (${item.size}) x${item.quantity}`).join('%0A')}%0A%0A` +
-          `*Shipping:* ${shippingMethod === 'inside' ? 'Inside Dhaka' : 'Outside Dhaka'} (৳${shippingCharge})%0A` +
+          `*Shipping:* ${shippingLabel} (৳${shippingCharge})%0A` +
           `*Total:* ৳${total}%0A` +
           `*Payment:* WhatsApp / bKash Prefilled%0A` +
           `*bKash Digits:* ${formData.bkashLastDigits}`;
@@ -166,14 +172,25 @@ export default function CheckoutPage({ items, onBack }: CheckoutPageProps) {
 
               <div className="space-y-3">
                 <button 
-                  onClick={() => setShippingMethod('inside')}
-                  className={`w-full flex items-center justify-between p-6 border transition-all ${shippingMethod === 'inside' ? 'border-brand-green bg-brand-green/5' : 'border-black/5 bg-white'}`}
+                  onClick={() => setShippingMethod('dhaka')}
+                  className={`w-full flex items-center justify-between p-6 border transition-all ${shippingMethod === 'dhaka' ? 'border-brand-green bg-brand-green/5' : 'border-black/5 bg-white'}`}
                 >
                   <div className="flex items-center gap-4">
-                    <div className={`w-4 h-4 rounded-full border-4 ${shippingMethod === 'inside' ? 'border-brand-green bg-white' : 'border-black/10 bg-transparent'}`} />
+                    <div className={`w-4 h-4 rounded-full border-4 ${shippingMethod === 'dhaka' ? 'border-brand-green bg-white' : 'border-black/10 bg-transparent'}`} />
                     <span className="text-sm font-bold text-black">Standard Shipping (Inside Dhaka)</span>
                   </div>
-                  <span className="text-sm font-black text-black">৳90.00</span>
+                  <span className="text-sm font-black text-black">৳120.00</span>
+                </button>
+
+                <button 
+                  onClick={() => setShippingMethod('chittagong')}
+                  className={`w-full flex items-center justify-between p-6 border transition-all ${shippingMethod === 'chittagong' ? 'border-brand-green bg-brand-green/5' : 'border-black/5 bg-white'}`}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className={`w-4 h-4 rounded-full border-4 ${shippingMethod === 'chittagong' ? 'border-brand-green bg-white' : 'border-black/10 bg-transparent'}`} />
+                    <span className="text-sm font-bold text-black">Standard Shipping (Chittagong)</span>
+                  </div>
+                  <span className="text-sm font-black text-black">৳80.00</span>
                 </button>
 
                 <button 
@@ -184,7 +201,7 @@ export default function CheckoutPage({ items, onBack }: CheckoutPageProps) {
                     <div className={`w-4 h-4 rounded-full border-4 ${shippingMethod === 'outside' ? 'border-brand-green bg-white' : 'border-black/10 bg-transparent'}`} />
                     <span className="text-sm font-bold text-black">Express Shipping (Outside Dhaka)</span>
                   </div>
-                  <span className="text-sm font-black text-black">৳160.00</span>
+                  <span className="text-sm font-black text-black">৳140.00</span>
                 </button>
               </div>
             </div>
@@ -237,14 +254,18 @@ export default function CheckoutPage({ items, onBack }: CheckoutPageProps) {
                             Send shipping fee via bKash/Nagad (Send Money) to:<br/>
                             <span className="text-xl font-display font-black text-brand-green">01825057141</span>
                           </p>
-                          <div className="grid grid-cols-2 gap-4 pt-2">
+                          <div className="grid grid-cols-3 gap-2 pt-2">
                             <div className="p-3 bg-zinc-50 border border-black/5">
-                              <p className="text-[9px] font-bold opacity-40 uppercase">Inside Dhaka</p>
-                              <p className="text-sm font-black text-black">৳90 Advanced</p>
+                              <p className="text-[8px] font-bold opacity-40 uppercase">Dhaka</p>
+                              <p className="text-[11px] font-black text-black">৳120</p>
                             </div>
                             <div className="p-3 bg-zinc-50 border border-black/5">
-                              <p className="text-[9px] font-bold opacity-40 uppercase">Outside Dhaka</p>
-                              <p className="text-sm font-black text-black">৳160 Advanced</p>
+                              <p className="text-[8px] font-bold opacity-40 uppercase">CTG</p>
+                              <p className="text-[11px] font-black text-black">৳80</p>
+                            </div>
+                            <div className="p-3 bg-zinc-50 border border-black/5">
+                              <p className="text-[8px] font-bold opacity-40 uppercase">Outside</p>
+                              <p className="text-[11px] font-black text-black">৳140</p>
                             </div>
                           </div>
                           <div className="grid grid-cols-1 gap-2 pt-2 text-[11px] font-medium opacity-60 text-black">

@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 
 const HERO_STORY_IMAGES = [
-  "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?q=80&w=800&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=800&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=800&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1589310243389-96a5483213a8?q=80&w=800&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=800&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1596755094514-f87034a7a988?q=80&w=800&auto=format&fit=crop",
 ];
 
 export default function Hero() {
@@ -108,13 +108,14 @@ export default function Hero() {
               
               <div className="absolute bottom-12 left-0 right-0 px-8 text-white space-y-4">
                 <h3 className="text-3xl font-display font-bold leading-tight tracking-tighter uppercase">
-                  {currentImageIndex === 0 && <>VINTAGE<br />HEAVEN.</>}
-                  {currentImageIndex === 1 && <>CURATED<br />LOOKS.</>}
-                  {currentImageIndex === 2 && <>REBEL<br />FASHION.</>}
+                  THRIFT<br />SHIRTS.
                 </h3>
-                <button className="bg-white/20 backdrop-blur-md border border-white/40 w-full py-3 text-[10px] font-black uppercase tracking-widest hover:bg-white hover:text-black transition-all">
+                <a 
+                  href="/shop"
+                  className="block text-center bg-white/20 backdrop-blur-md border border-white/40 w-full py-3 text-[10px] font-black uppercase tracking-widest hover:bg-white hover:text-black transition-all"
+                >
                   Swipe Up to Shop
-                </button>
+                </a>
               </div>
             </div>
 

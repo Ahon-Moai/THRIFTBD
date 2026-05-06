@@ -4,7 +4,7 @@ import { Filter, SlidersHorizontal, ChevronDown, Check } from 'lucide-react';
 import { Product } from '../types';
 import ProductCard from './ProductCard';
 
-const CATEGORIES = ['All', 'Tees', 'Sweatshirts', 'Outerwear', 'Denim', 'Accessories'];
+const CATEGORIES = ['All', 'Thrift Shirts', 'Denims Shirts', 'Denims Jacket', 'Tracksuit', 'T-shirt', 'Sweatshirts', 'Outerwear', 'Accessories'];
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
 export default function ShopPage({ products }: { products: Product[] }) {
@@ -20,7 +20,7 @@ export default function ShopPage({ products }: { products: Product[] }) {
       // Find matching category in the list
       const matched = CATEGORIES.find(c => c.toLowerCase() === cat.toLowerCase());
       if (matched) setSelectedCategory(matched);
-      else if (cat.toLowerCase() === 'tees') setSelectedCategory('Tees'); // Fallback for slugs
+      else if (cat.toLowerCase() === 'tees') setSelectedCategory('Thrift Shirts'); // Fallback for slugs
       setShowFilters(true);
     }
   }, []);

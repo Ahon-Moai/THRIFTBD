@@ -208,7 +208,7 @@ export default function ProductDetailPage({
       <div className="mt-32">
         <div className="flex justify-between items-end mb-12">
           <h2 className="text-3xl font-black tracking-tighter">You might also like</h2>
-          <a href="/shop" className="text-[10px] font-bold uppercase tracking-widest border-b border-black pb-1">View All Tees</a>
+          <a href="/shop" className="text-[10px] font-bold uppercase tracking-widest border-b border-black pb-1">View All Thrift Shirts</a>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
            {/* Reusable ProductCards could go here */}
