@@ -1,10 +1,10 @@
 import { motion } from 'motion/react';
 
 const feed = [
-  'https://picsum.photos/seed/ig1/600/600',
-  'https://picsum.photos/seed/ig2/600/600',
-  'https://picsum.photos/seed/ig3/600/600',
-  'https://picsum.photos/seed/ig4/600/600',
+  'https://i.ibb.co.com/nSK7zxW/2.png',
+  'https://i.ibb.co.com/n21vcBm/3.png',
+  'https://i.ibb.co.com/WWQ8hcfg/1.png',
+  'https://i.ibb.co.com/nSK7zxW/2.png',
 ];
 
 export default function InstagramFeed() {

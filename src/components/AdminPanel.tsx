@@ -30,7 +30,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { Product } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 
-const CATEGORIES = ['Thrift Shirts', 'Denims Shirts', 'Denims Jacket', 'Tracksuit', 'Sweatshirts', 'Outerwear', 'Accessories'];
+const CATEGORIES = ['Thrift Shirts', 'Denims Shirts', 'Denims Jacket', 'Sweatshirts', 'Outerwear', 'Accessories'];
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', 'One Size'];
 
 type Tab = 'dashboard' | 'inventory' | 'orders' | 'json';

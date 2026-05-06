@@ -2,11 +2,9 @@ import React from 'react';
 import { motion } from 'motion/react';
 
 const collections = [
-  { id: 1, name: 'Thrift Shirts', image: 'https://images.unsplash.com/photo-1589310243389-96a5483213a8?q=80&w=800&auto=format&fit=crop', className: 'lg:col-span-2 lg:row-span-2', slug: 'Thrift Shirts' },
-  { id: 2, name: 'Denims Shirts', image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=800&auto=format&fit=crop', className: 'lg:col-span-2 lg:row-span-2', slug: 'Denims Shirts' },
-  { id: 3, name: 'Denims Jacket', image: 'https://images.unsplash.com/photo-1576905355165-7443a15aa482?q=80&w=800&auto=format&fit=crop', className: 'lg:col-span-1 lg:row-span-1', slug: 'Denims Jacket' },
-  { id: 4, name: 'Tracksuit', image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=800&auto=format&fit=crop', className: 'lg:col-span-1 lg:row-span-1', slug: 'Tracksuit' },
-  { id: 5, name: 'T-shirt', image: 'https://images.unsplash.com/photo-1596755094514-f87034a7a988?q=80&w=800&auto=format&fit=crop', className: 'lg:col-span-2 lg:row-span-1', slug: 'T-shirt' },
+  { id: 1, name: 'Thrift Shirts', image: 'https://i.ibb.co.com/nSK7zxW/2.png', className: 'lg:col-span-2 lg:row-span-2', slug: 'Thrift Shirts' },
+  { id: 2, name: 'Denims Shirts', image: 'https://i.ibb.co.com/WWQ8hcfg/1.png', className: 'lg:col-span-2 lg:row-span-2', slug: 'Denims Shirts' },
+  { id: 3, name: 'Denims Jacket', image: 'https://i.ibb.co.com/n21vcBm/3.png', className: 'lg:col-span-1 lg:row-span-2', slug: 'Denims Jacket' },
 ];
 
 export default function CollectionGrid() {

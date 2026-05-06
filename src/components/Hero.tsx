@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 
 const HERO_STORY_IMAGES = [
-  "https://images.unsplash.com/photo-1589310243389-96a5483213a8?q=80&w=800&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=800&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1596755094514-f87034a7a988?q=80&w=800&auto=format&fit=crop",
+  "https://i.ibb.co.com/nSK7zxW/2.png",
+  "https://i.ibb.co.com/n21vcBm/3.png",
+  "https://i.ibb.co.com/WWQ8hcfg/1.png",
 ];
 
 export default function Hero() {

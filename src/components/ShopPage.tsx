@@ -4,7 +4,7 @@ import { Filter, SlidersHorizontal, ChevronDown, Check } from 'lucide-react';
 import { Product } from '../types';
 import ProductCard from './ProductCard';
 
-const CATEGORIES = ['All', 'Thrift Shirts', 'Denims Shirts', 'Denims Jacket', 'Tracksuit', 'Sweatshirts', 'Outerwear', 'Accessories'];
+const CATEGORIES = ['All', 'Thrift Shirts', 'Denims Shirts', 'Denims Jacket', 'Sweatshirts', 'Outerwear', 'Accessories'];
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
 export default function ShopPage({ products }: { products: Product[] }) {
