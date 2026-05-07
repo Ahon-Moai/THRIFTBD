@@ -20,9 +20,9 @@ async function startServer() {
   app.post('/api/track', async (req, res) => {
     const { eventName, eventId, userData, customData, sourceUrl } = req.body;
     
-    const pixelId = process.env.VITE_META_PIXEL_ID;
-    const accessToken = process.env.META_ACCESS_TOKEN;
-    const testEventCode = process.env.VITE_META_TEST_EVENT_CODE; // REMOVE THIS FOR PRODUCTION
+    const pixelId = process.env.VITE_META_PIXEL_ID || '1564061235060927';
+    const accessToken = process.env.META_ACCESS_TOKEN || 'EAAST3n1jRa8BRT7oMVDiCt0irIwqAXOsSUmM8dZB0wR6yxcQyGkfvfJ7obCdmxpOnjbUvw6UNpZB0GptkbZCgagyexMDLKeKgKFu3sgCTqZCrPjvgNZCXy73jkdLjVLBZAGVZCZA95YVUycbiEueLK0W3ABGZAGwsscQoZBCzoAC1U2OgYM7Pp2UBfysUGyZB2mNzC5kQZDZD';
+    const testEventCode = process.env.VITE_META_TEST_EVENT_CODE || 'TEST57052'; // REMOVE THIS FOR PRODUCTION
 
     if (!pixelId || !accessToken) {
       console.warn('Meta credentials missing. Skipping CAPI event.');

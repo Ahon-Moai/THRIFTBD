@@ -3,6 +3,7 @@ import { ChevronRight, ShieldCheck, Truck, MessageSquare, CreditCard, Phone, Sma
 import { CartItem } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../lib/supabase';
+import { trackEvent } from '../App';
 
 interface CheckoutPageProps {
   items: CartItem[];
@@ -27,6 +28,15 @@ export default function CheckoutPage({ items, onBack }: CheckoutPageProps) {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => setUser(user));
+    
+    // Meta Track: InitiateCheckout
+    trackEvent('InitiateCheckout', {
+      content_ids: items.map(i => i.productId),
+      contents: items.map(i => ({ id: i.productId, quantity: i.quantity })),
+      currency: 'BDT',
+      value: subtotal,
+      num_items: items.reduce((acc, i) => acc + i.quantity, 0)
+    });
   }, []);
 
   const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
@@ -64,6 +74,16 @@ export default function CheckoutPage({ items, onBack }: CheckoutPageProps) {
         .single();
 
       if (error) throw error;
+
+      // Meta Track: Purchase
+      trackEvent('Purchase', {
+        content_ids: items.map(i => i.productId),
+        contents: items.map(i => ({ id: i.productId, quantity: i.quantity })),
+        currency: 'BDT',
+        value: total,
+        num_items: items.reduce((acc, i) => acc + i.quantity, 0),
+        order_id: order.id
+      });
 
       // 2. Open WhatsApp if selected
       if (paymentMethod === 'whatsapp') {

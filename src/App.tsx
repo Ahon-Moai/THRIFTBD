@@ -6,9 +6,12 @@
 import { useState, useEffect, Suspense, lazy } from 'react';
 
 // --- META PIXEL & CAPI INTEGRATION START ---
+const FALLBACK_PIXEL_ID = '1564061235060927';
+
 // Reusable tracking function for deduplicated events
 export const trackEvent = async (eventName: string, customData: any = {}) => {
   const eventId = `evt_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+  const pixelId = import.meta.env.VITE_META_PIXEL_ID || FALLBACK_PIXEL_ID;
   
   // 1. Browser Pixel Track
   if (typeof window !== 'undefined' && (window as any).fbq) {
@@ -17,7 +20,6 @@ export const trackEvent = async (eventName: string, customData: any = {}) => {
 
   // 2. Server CAPI Track
   try {
-    const pixelId = import.meta.env.VITE_META_PIXEL_ID;
     if (pixelId) {
       await fetch('/api/track', {
         method: 'POST',
@@ -110,7 +112,7 @@ export default function App() {
       'https://connect.facebook.net/en_US/fbevents.js'
     );
 
-    const pixelId = import.meta.env.VITE_META_PIXEL_ID;
+    const pixelId = import.meta.env.VITE_META_PIXEL_ID || FALLBACK_PIXEL_ID;
     if (pixelId) {
       (window as any).fbq('init', pixelId);
     }
@@ -190,6 +192,15 @@ export default function App() {
   }, []);
 
   const addToCart = (product: Product, selectedSize?: string, silent: boolean = false) => {
+    // Meta Track: AddToCart
+    trackEvent('AddToCart', {
+      content_name: product.name,
+      content_ids: [product.id],
+      content_type: 'product',
+      value: product.price,
+      currency: 'BDT'
+    });
+
     setCartItems(prev => {
       const sizeToStore = selectedSize || (product.sizes && product.sizes[0]) || 'One Size';
       const existing = prev.find(item => item.productId === product.id && item.size === sizeToStore);
