@@ -4,6 +4,41 @@
  */
 
 import { useState, useEffect, Suspense, lazy } from 'react';
+
+// --- META PIXEL & CAPI INTEGRATION START ---
+// Reusable tracking function for deduplicated events
+export const trackEvent = async (eventName: string, customData: any = {}) => {
+  const eventId = `evt_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+  
+  // 1. Browser Pixel Track
+  if (typeof window !== 'undefined' && (window as any).fbq) {
+    (window as any).fbq('track', eventName, customData, { eventID: eventId });
+  }
+
+  // 2. Server CAPI Track
+  try {
+    const pixelId = import.meta.env.VITE_META_PIXEL_ID;
+    if (pixelId) {
+      await fetch('/api/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventName,
+          eventId,
+          customData,
+          sourceUrl: window.location.href,
+          userData: {
+            // Optional: add more user signals here if available
+          }
+        })
+      });
+    }
+  } catch (err) {
+    console.error('CAPI track error:', err);
+  }
+};
+// --- META PIXEL & CAPI INTEGRATION END ---
+
 import Header from './components/Header';
 import Hero from './components/Hero';
 import CollectionGrid from './components/CollectionGrid';
@@ -31,6 +66,61 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState<'home' | 'product' | 'shop' | 'admin' | 'checkout'>('home');
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+
+  // --- META PIXEL INITIALIZATION START ---
+  useEffect(() => {
+    // Meta Pixel Base Code
+    // @ts-ignore
+    !(function(f, b, e, v, n, t, s) {
+      // @ts-ignore
+      if (f.fbq) return;
+      // @ts-ignore
+      n = f.fbq = function() {
+        // @ts-ignore
+        n.callMethod
+          ? // @ts-ignore
+            n.callMethod.apply(n, arguments)
+          : // @ts-ignore
+            n.queue.push(arguments);
+      };
+      // @ts-ignore
+      if (!f._fbq) f._fbq = n;
+      // @ts-ignore
+      n.push = n;
+      // @ts-ignore
+      n.loaded = !0;
+      // @ts-ignore
+      n.version = '2.0';
+      // @ts-ignore
+      n.queue = [];
+      // @ts-ignore
+      t = b.createElement(e);
+      // @ts-ignore
+      t.async = !0;
+      // @ts-ignore
+      t.src = v;
+      // @ts-ignore
+      s = b.getElementsByTagName(e)[0];
+      // @ts-ignore
+      s.parentNode.insertBefore(t, s);
+    })(
+      window,
+      document,
+      'script',
+      'https://connect.facebook.net/en_US/fbevents.js'
+    );
+
+    const pixelId = import.meta.env.VITE_META_PIXEL_ID;
+    if (pixelId) {
+      (window as any).fbq('init', pixelId);
+    }
+  }, []);
+
+  // Track PageView on route change
+  useEffect(() => {
+    trackEvent('PageView');
+  }, [currentPage]);
+  // --- META PIXEL INITIALIZATION END ---
 
   const fetchProducts = async () => {
     if (!isSupabaseConfigured) {
